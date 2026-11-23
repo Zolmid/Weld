@@ -3,6 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+#if !BRAVE_IOS_SLIM
 import BraveCore
 import BraveUI
 import BraveWallet
@@ -161,28 +162,6 @@ extension BrowserViewController: BraveWalletDelegate {
     }
   }
 
-  public func openDestinationURL(_ destinationURL: URL) {
-    if presentedViewController != nil {
-      // dismiss to show the new tab
-      self.dismiss(animated: true)
-    }
-    if let url = tabManager.selectedTab?.visibleURL {
-      if InternalURL.isValid(url: url) {
-        select(url: destinationURL, isUserDefinedURLNavigation: false)
-      } else {
-        tabManager.addTabAndSelect(
-          URLRequest(url: destinationURL),
-          isPrivate: privateBrowsingManager.isPrivateBrowsing
-        )
-      }
-    } else {
-      _ = tabManager.addTabAndSelect(
-        URLRequest(url: destinationURL),
-        isPrivate: privateBrowsingManager.isPrivateBrowsing
-      )
-    }
-  }
-
   public func walletPanel(
     _ panel: WalletPanelHostingController,
     presentWalletWithContext: PresentingContext,
@@ -262,3 +241,4 @@ extension BrowserViewController {
     present(vc, animated: true)
   }
 }
+#endif

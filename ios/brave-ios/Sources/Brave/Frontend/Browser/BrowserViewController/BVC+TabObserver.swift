@@ -5,7 +5,9 @@
 
 import BraveCore
 import BraveUI
+#if !BRAVE_IOS_SLIM
 import BraveWallet
+#endif
 import Foundation
 import Preferences
 import Shared
@@ -55,6 +57,7 @@ extension BrowserViewController: TabObserver {
       }
     }
 
+    #if !BRAVE_IOS_SLIM
     // check if web view is loading a different origin than the one currently loaded
     if let selectedTab = tabManager.selectedTab {
       if selectedTab.visibleURL?.origin != visibleURL?.origin {
@@ -81,6 +84,7 @@ extension BrowserViewController: TabObserver {
         updateURLBarWalletButton()
       }
     }
+    #endif
   }
 
   public func tabWasShown(_ tab: some TabState) {
@@ -114,6 +118,7 @@ extension BrowserViewController: TabObserver {
       return
     }
 
+    #if !BRAVE_IOS_SLIM
     // Dismiss wallet panel and notification if the tab's committed URL origin no longer matches
     let committedOrigin = tab.lastCommittedURL?.origin
     if let popoverController = self.presentedViewController as? PopoverController,
@@ -127,6 +132,7 @@ extension BrowserViewController: TabObserver {
       // Tab navigated to a different origin (e.g. redirect); dismiss wallet notification if it was for another origin
       dismissWalletNotificationIfOriginDiffers(from: committedOrigin)
     }
+    #endif
 
     updateUIForReaderHomeStateForTab(tab)
   }
@@ -157,6 +163,7 @@ extension BrowserViewController: TabObserver {
     }
 
     navigateInTab(tab: tab)
+    #if !BRAVE_IOS_SLIM
     rewards.reportTabUpdated(
       tab: tab,
       isSelected: tabManager.selectedTab === tab,
@@ -168,6 +175,7 @@ extension BrowserViewController: TabObserver {
       // Set rewards inter site url as new page load url.
       tab.rewardsXHRLoadURL = tab.visibleURL
     }
+    #endif
 
     if let lastCommittedURL = tab.lastCommittedURL {
       maybeRecordBraveSearchDailyUsage(url: lastCommittedURL)
@@ -221,6 +229,7 @@ extension BrowserViewController: TabObserver {
       }
     }
 
+    #if !BRAVE_IOS_SLIM
     // Rewards reporting
     if let url = tab.visibleURL, !url.isLocal {
       // Notify Brave Rewards library of the same document navigation.
@@ -231,6 +240,7 @@ extension BrowserViewController: TabObserver {
         tab.browserData?.reportPageLoad(to: rewards)
       }
     }
+    #endif
   }
 
   public func tabDidChangeTitle(_ tab: some TabState) {
@@ -261,16 +271,22 @@ extension BrowserViewController {
       DarkReaderScriptHandler(),
       BraveGetUA(),
       BraveSearchScriptHandler(profile: profile, rewards: rewards),
-      AdsMediaReportingScriptHandler(),
+    ]
+    #if !BRAVE_IOS_SLIM
+    injectedScripts.append(AdsMediaReportingScriptHandler())
+    #endif
+    injectedScripts += [
       DeAmpScriptHandler(),
       SiteStateListenerScriptHandler(),
       CosmeticFiltersScriptHandler(),
       URLPartinessScriptHandler(),
       FaviconScriptHandler(),
       YoutubeQualityScriptHandler(),
-      BraveLeoScriptHandler(),
-      RequestBlockingContentScriptHandler(),
     ]
+    #if !BRAVE_IOS_SLIM
+    injectedScripts.append(BraveLeoScriptHandler())
+    #endif
+    injectedScripts.append(RequestBlockingContentScriptHandler())
 
     if let contentBlocker = tab.contentBlocker {
       injectedScripts.append(contentBlocker)
@@ -286,17 +302,20 @@ extension BrowserViewController {
       injectedScripts.append(BraveTalkScriptHandler())
     }
 
+    #if !BRAVE_IOS_SLIM
     if profileController.braveWalletAPI.isAllowed {
       injectedScripts.append(Web3NameServiceScriptHandler())
     }
+    #endif
 
     // Only add the logins handler, wallet provider and skus if the tab is NOT a private tab
     if !tab.isPrivate {
-      injectedScripts += [
-        LoginsScriptHandler(passwordAPI: profileController.passwordAPI),
-        BraveSearchResultAdScriptHandler(),
-        BraveSkusScriptHandler(),
-      ]
+      injectedScripts.append(LoginsScriptHandler(passwordAPI: profileController.passwordAPI))
+      #if !BRAVE_IOS_SLIM
+      injectedScripts.append(BraveSearchResultAdScriptHandler())
+      #endif
+      injectedScripts.append(BraveSkusScriptHandler())
+      #if !BRAVE_IOS_SLIM
       if profileController.braveWalletAPI.isAllowed {
         injectedScripts += [
           EthereumProviderScriptHandler(),
@@ -306,6 +325,7 @@ extension BrowserViewController {
       if WalletConstants.isCardanoDAppSupportEnabled {
         injectedScripts.append(CardanoProviderScriptHandler())
       }
+      #endif
     }
 
     if FeatureList.kBraveTranslateEnabled.enabled {
@@ -327,7 +347,9 @@ extension BrowserViewController {
       )
     }
 
+    #if !BRAVE_IOS_SLIM
     (tab.browserData?.getContentScript(name: Web3NameServiceScriptHandler.scriptName)
       as? Web3NameServiceScriptHandler)?.delegate = self
+    #endif
   }
 }

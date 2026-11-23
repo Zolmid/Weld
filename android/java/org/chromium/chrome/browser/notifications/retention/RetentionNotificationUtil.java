@@ -17,6 +17,7 @@ import androidx.core.app.NotificationCompat;
 import org.chromium.base.ContextUtils;
 import org.chromium.base.IntentUtils;
 import org.chromium.chrome.R;
+import org.chromium.chrome.browser.BraveConfig;
 import org.chromium.chrome.browser.brave_stats.BraveStatsUtil;
 import org.chromium.chrome.browser.local_database.DatabaseHelper;
 import org.chromium.chrome.browser.notifications.channels.BraveChannelDefinitions;
@@ -219,7 +220,12 @@ public class RetentionNotificationUtil {
         return "";
     }
 
+    public static boolean areEnabled() {
+        return BraveConfig.ENABLE_PROMOTIONS;
+    }
+
     public static void scheduleNotification(Context context, String notificationType) {
+        if (!areEnabled()) return;
         RetentionNotification retentionNotification = getNotificationObject(notificationType);
         Intent notificationIntent = new Intent(context, RetentionNotificationPublisher.class);
         notificationIntent.putExtra(NOTIFICATION_TYPE, notificationType);
@@ -241,6 +247,7 @@ public class RetentionNotificationUtil {
 
     public static void scheduleNotificationWithTime(
             Context context, String notificationType, long timeInMilliseconds) {
+        if (!areEnabled()) return;
         RetentionNotification retentionNotification = getNotificationObject(notificationType);
         Intent notificationIntent = new Intent(context, RetentionNotificationPublisher.class);
         notificationIntent.putExtra(NOTIFICATION_TYPE, notificationType);

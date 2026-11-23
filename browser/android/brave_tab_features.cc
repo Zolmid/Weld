@@ -6,9 +6,6 @@
 #include "brave/browser/android/brave_tab_features.h"
 
 #include "base/feature_list.h"
-#include "brave/browser/ai_chat/ai_chat_utils.h"
-#include "brave/browser/ai_chat/tab_data_web_contents_observer.h"
-#include "brave/browser/ai_chat/web_mcp_injection/web_mcp_injector.h"
 #include "brave/browser/android/youtube_script_injector/youtube_script_injector_tab_helper.h"
 #include "brave/browser/image_metadata_stripper/file_upload_controller.h"
 #include "brave/browser/misc_metrics/captcha_metrics.h"
@@ -23,11 +20,17 @@
 #include "brave/components/misc_metrics/features.h"
 #include "brave/components/playlist/core/common/buildflags/buildflags.h"
 #include "brave/components/web_discovery/buildflags/buildflags.h"
-#include "chrome/browser/android/tab_android.h"
 #include "chrome/browser/profiles/profile.h"
 #include "components/tabs/public/tab_interface.h"
 #include "content/public/browser/web_contents.h"
 #include "third_party/widevine/cdm/buildflags.h"
+
+#if BUILDFLAG(ENABLE_AI_CHAT)
+#include "brave/browser/ai_chat/ai_chat_utils.h"
+#include "brave/browser/ai_chat/tab_data_web_contents_observer.h"
+#include "brave/browser/ai_chat/web_mcp_injection/web_mcp_injector.h"
+#include "chrome/browser/android/tab_android.h"
+#endif
 
 #if BUILDFLAG(ENABLE_BRAVE_ADS)
 #include "brave/browser/brave_ads/creatives/search_result_ad/creative_search_result_ad_tab_helper.h"
@@ -92,6 +95,7 @@ BraveTabFeatures::BraveTabFeatures(content::WebContents* web_contents,
   tabs::TabInterface& tab_interface =
       *TabInterface::GetFromContents(web_contents);
 
+#if BUILDFLAG(ENABLE_AI_CHAT)
   if (ai_chat::IsAllowedForContext(profile)) {
     tab_data_observer_ = std::make_unique<ai_chat::TabDataWebContentsObserver>(
         TabAndroid::FromWebContents(web_contents)->GetAndroidId(),
@@ -100,6 +104,7 @@ BraveTabFeatures::BraveTabFeatures(content::WebContents* web_contents,
     // WebMcpInjector. Null when WebMCP is disabled or has no rules.
     web_mcp_injector_ = ai_chat::WebMcpInjector::MaybeCreate(tab_interface);
   }
+#endif
 
   if (base::FeatureList::IsEnabled(
           misc_metrics::features::kCaptchaMetricsCollection)) {

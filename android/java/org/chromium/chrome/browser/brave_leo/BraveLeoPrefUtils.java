@@ -9,6 +9,7 @@ import org.chromium.base.BraveFeatureList;
 import org.chromium.base.ContextUtils;
 import org.chromium.base.Log;
 import org.chromium.build.annotations.Nullable;
+import org.chromium.chrome.browser.BraveConfig;
 import org.chromium.chrome.browser.app.BraveActivity;
 import org.chromium.chrome.browser.flags.ChromeFeatureList;
 import org.chromium.chrome.browser.preferences.BravePref;
@@ -22,11 +23,14 @@ public class BraveLeoPrefUtils {
     private static final String TAG = "BraveLeoPrefUtils";
 
     /**
-     * Returns true if Leo is disabled by policy for the given profile.
+     * Returns true if Leo is unavailable in this build or disabled by policy.
      *
      * <p>Note: The pref is "enabled_by_policy", so we check if it's managed AND false (disabled).
      */
     public static boolean isLeoDisabledByPolicy(@Nullable Profile profile) {
+        if (!BraveConfig.ENABLE_AI_CHAT) {
+            return true;
+        }
         if (profile == null) {
             return false;
         }
@@ -67,7 +71,7 @@ public class BraveLeoPrefUtils {
         // (see ai_chat::prefs::RegisterProfilePrefs, gated on IsAIChatEnabled()). Reading an
         // unregistered pref trips a CHECK in PrefService, so bail out when AI Chat is disabled.
         // No AI Chat means no Leo subscription anyway, so returning false is correct.
-        if (!ChromeFeatureList.isEnabled(BraveFeatureList.AI_CHAT)) {
+        if (!isLeoEnabled()) {
             return false;
         }
         Profile profileToUse = profile == null ? BraveLeoPrefUtils.getProfile() : profile;
@@ -161,11 +165,7 @@ public class BraveLeoPrefUtils {
     }
 
     public static boolean isLeoEnabled() {
-        if (!ChromeFeatureList.isEnabled(BraveFeatureList.AI_CHAT)) {
-            return false;
-        }
-
-        return true;
+        return BraveConfig.ENABLE_AI_CHAT && ChromeFeatureList.isEnabled(BraveFeatureList.AI_CHAT);
     }
 
     public static boolean isSubscriptionLinked() {

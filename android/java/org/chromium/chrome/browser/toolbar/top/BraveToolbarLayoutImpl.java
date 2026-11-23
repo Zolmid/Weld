@@ -52,6 +52,7 @@ import org.chromium.base.ThreadUtils;
 import org.chromium.base.supplier.MonotonicObservableSupplier;
 import org.chromium.base.task.AsyncTask;
 import org.chromium.chrome.R;
+import org.chromium.chrome.browser.BraveConfig;
 import org.chromium.chrome.browser.BraveConstants;
 import org.chromium.chrome.browser.BraveRewardsHelper;
 import org.chromium.chrome.browser.BraveRewardsNativeWorker;
@@ -914,6 +915,7 @@ public abstract class BraveToolbarLayoutImpl extends ToolbarLayout
     }
 
     private void checkForTooltip(Tab tab) {
+        if (!BraveConfig.ENABLE_PROMOTIONS) return;
         try {
             if (BraveShieldsUtils.isTooltipShown || BraveActivity.getBraveActivity().mIsDeepLink) {
                 return;

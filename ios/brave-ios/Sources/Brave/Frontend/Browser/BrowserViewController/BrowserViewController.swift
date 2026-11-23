@@ -2,21 +2,23 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+#if !BRAVE_IOS_SLIM
 import AIChat
+#endif
 import BraveCore
 import BraveNews
 import BraveShared
 import BraveShields
 import BraveTalk
 import BraveUI
-import BraveVPN
+#if !BRAVE_IOS_SLIM
 import BraveWallet
+#endif
 import CertificateUtilities
 import CoreData
 import Data
 import Favicon
 import Growth
-import NetworkExtension
 import Onboarding
 import Preferences
 import ScreenTime
@@ -244,13 +246,15 @@ public class BrowserViewController: UIViewController {
   private var cancellables: Set<AnyCancellable> = []
 
   let rewards: BraveRewards
+  #if !BRAVE_IOS_SLIM
   var rewardsObserver: RewardsObserver?
   var promotionFetchTimer: Timer?
   private var notificationsHandler: AdsNotificationHandler?
+  #endif
   let notificationsPresenter = BraveNotificationsPresenter()
+  #if !BRAVE_IOS_SLIM
   var publisher: BraveCore.BraveRewards.PublisherInfo?
-
-  let vpnProductInfo = BraveVPNProductInfo()
+  #endif
 
   /// Window Protection instance which will be used for controller requires biometric authentication
   public var windowProtection: WindowProtection?
@@ -276,22 +280,24 @@ public class BrowserViewController: UIViewController {
 
   private(set) var widgetBookmarksFRC: NSFetchedResultsController<Favorite>?
   var widgetFaviconFetchers: [Task<Favicon, Error>] = []
+  #if !BRAVE_IOS_SLIM
   let deviceCheckClient: DeviceCheckClient?
+  #endif
 
   // Brave Talk native implementations
   let braveTalkJitsiCoordinator: BraveTalkJitsiCoordinator
 
+  #if !BRAVE_IOS_SLIM
   /// The currently open WalletStore
   weak var walletStore: WalletStore?
+  #endif
 
   var processAddressBarTask: Task<(), Never>?
   var topToolbarDidPressReloadTask: Task<(), Never>?
 
-  /// In app purchase obsever for VPN Subscription action
-  let iapObserver: BraveVPNInAppPurchaseObserver
-
   private let prefsChangeRegistrar: PrefChangeRegistrar
 
+  #if !BRAVE_IOS_SLIM
   /// Whether a wallet exists, to distinguish create/reset from the account
   /// edits that also write the keyrings pref.
   private var isWalletCreated: Bool = false {
@@ -299,6 +305,7 @@ public class BrowserViewController: UIViewController {
       UserScriptManager.shared.isWalletCreated = isWalletCreated
     }
   }
+  #endif
 
   let defaultBrowserHelper: DefaultBrowserHelper = .init()
 
@@ -355,6 +362,7 @@ public class BrowserViewController: UIViewController {
     // Setup ReaderMode Cache
     self.readerModeCache = ReaderModeScriptHandler.cache(for: tabManager.selectedTab)
 
+    #if !BRAVE_IOS_SLIM
     if !BraveRewards.isSupported(prefService: profileController.profile.prefs), rewards.isEnabled {
       // Disable rewards services in case previous user already enabled
       // rewards in previous build
@@ -368,14 +376,12 @@ public class BrowserViewController: UIViewController {
     self.deviceCheckClient = DeviceCheckClient(
       environment: BraveRewards.Configuration.current().environment
     )
-
-    iapObserver = BraveVPN.iapObserver
+    #endif
 
     super.init(nibName: nil, bundle: nil)
     didInit()
 
-    iapObserver.delegate = self
-
+    #if !BRAVE_IOS_SLIM
     rewards.rewardsServiceDidStart = { [weak self] _ in
       self?.setupLedger()
     }
@@ -386,6 +392,7 @@ public class BrowserViewController: UIViewController {
     } else {
       rewards.ads.initialize { _ in }
     }
+    #endif
 
     // Observer watching tab information is sent by another device
     openTabsModelStateListener = profileController.sendTabAPI.add(
@@ -483,12 +490,16 @@ public class BrowserViewController: UIViewController {
     }
   }
 
+  #if !BRAVE_IOS_SLIM
   private var rewardsEnabledObserveration: NSKeyValueObservation?
+  #endif
 
   fileprivate func didInit() {
     updateApplicationShortcuts()
     tabManager.addDelegate(self)
+    #if !BRAVE_IOS_SLIM
     UserScriptManager.shared.fetchWalletScripts(from: profileController.braveWalletAPI)
+    #endif
     downloadQueue.delegate = self
 
     // Observe some user preferences
@@ -496,24 +507,25 @@ public class BrowserViewController: UIViewController {
     Preferences.General.tabBarVisibility.observe(from: self)
     Preferences.General.defaultPageZoomLevel.observe(from: self)
     Preferences.Shields.allShields.forEach { $0.observe(from: self) }
+    #if !BRAVE_IOS_SLIM
     Preferences.Rewards.hideRewardsIcon.observe(from: self)
     Preferences.Rewards.rewardsToggledOnce.observe(from: self)
+    #endif
     Preferences.Playlist.enablePlaylistURLBarButton.observe(from: self)
     Preferences.Shields.blockAdsAndTrackingLevelRaw.observe(from: self)
     Preferences.Privacy.screenTimeEnabled.observe(from: self)
     Preferences.Translate.translateEnabled.observe(from: self)
 
     // Observe some Chromium prefs
+    #if !BRAVE_IOS_SLIM
     prefsChangeRegistrar.addObserver(forPath: BraveRewardsDisabledByPolicyPrefName) {
       [weak self] _ in
       self?.updateRewardsButtonState()
     }
-    prefsChangeRegistrar.addObserver(forPath: kManagedBraveVPNDisabledPrefName) { [weak self] _ in
-      self?.disconnectVPNIfDisabledByPolicy()
-    }
     prefsChangeRegistrar.addObserver(forPath: kBraveAdsSponsoredEnabledPrefName) { [weak self] _ in
       self?.recordAdsUsageType()
     }
+    #endif
     prefsChangeRegistrar.addObserver(forPath: kMediaBackgroundingEnabled) { [weak self] _ in
       guard let self else { return }
       tabManager.selectedTab?.browserData?.setScripts(scripts: [
@@ -539,6 +551,7 @@ public class BrowserViewController: UIViewController {
         tabManager.reloadSelectedTab()
       }
     }
+    #if !BRAVE_IOS_SLIM
     prefsChangeRegistrar.addObserver(forPath: kDefaultEthereumWallet) { [weak self] _ in
       self?.defaultWalletChanged(for: .eth)
     }
@@ -565,8 +578,8 @@ public class BrowserViewController: UIViewController {
       self.isWalletCreated = isWalletCreated
       self.defaultWalletChanged(for: .eth)
     }
+    #endif
 
-    disconnectVPNIfDisabledByPolicy()
 
     pageZoomListener = NotificationCenter.default.addObserver(
       forName: PageZoomView.notificationName,
@@ -584,6 +597,7 @@ public class BrowserViewController: UIViewController {
       })
     }
 
+    #if !BRAVE_IOS_SLIM
     rewardsEnabledObserveration = rewards.ads.observe(\.isNotificationsEnabled, options: [.new]) {
       [weak self] _, _ in
       guard let self = self else { return }
@@ -591,9 +605,10 @@ public class BrowserViewController: UIViewController {
       self.setupAdsNotificationHandler()
       self.recordAdsUsageType()
     }
+    #endif
     Preferences.PrivacyReports.captureShieldsData.observe(from: self)
-    Preferences.PrivacyReports.captureVPNAlerts.observe(from: self)
 
+    #if !BRAVE_IOS_SLIM
     if rewards.rewardsAPI != nil {
       // Ledger was started immediately due to user having ads enabled
       setupLedger()
@@ -602,6 +617,7 @@ public class BrowserViewController: UIViewController {
     Preferences.NewTabPage.attemptToShowClaimRewardsNotification.value = true
 
     setupAdsNotificationHandler()
+    #endif
 
     // Setup Widgets FRC
     widgetBookmarksFRC = Favorite.frc()
@@ -618,7 +634,6 @@ public class BrowserViewController: UIViewController {
 
     // P3A Record
     maybeRecordInitialShieldsP3A()
-    recordVPNUsageP3A(vpnEnabled: BraveVPN.isConnected)
     recordAccessibilityDisplayZoomEnabledP3A()
     recordAccessibilityDocumentsDirectorySizeP3A()
     ReaderModeTabHelper.recordTimeBasedNumberReaderModeUsedP3A(activated: false)
@@ -668,6 +683,7 @@ public class BrowserViewController: UIViewController {
     }
   }
 
+  #if !BRAVE_IOS_SLIM
   private func setupAdsNotificationHandler() {
     notificationsHandler = AdsNotificationHandler(
       ads: rewards.ads,
@@ -689,6 +705,7 @@ public class BrowserViewController: UIViewController {
       }
     }
   }
+  #endif
 
   func shouldShowFooterForTraitCollection(_ previousTraitCollection: UITraitCollection) -> Bool {
     return previousTraitCollection.verticalSizeClass != .compact
@@ -891,23 +908,6 @@ public class BrowserViewController: UIViewController {
 
     // Stop Voice Search and dismiss controller
     stopVoiceSearch()
-  }
-
-  private func disconnectVPNIfDisabledByPolicy() {
-    if !profileController.profile.prefs.isBraveVPNAvailable,
-      BraveVPN.isConnected || BraveVPN.isConnecting
-    {
-      BraveVPN.disconnect(skipChecks: true)
-    }
-  }
-
-  @objc func vpnConfigChanged() {
-    // Load latest changes to the vpn.
-    NEVPNManager.shared().loadFromPreferences { _ in }
-
-    if case .purchased(let enabled) = BraveVPN.vpnState, enabled {
-      recordVPNUsageP3A(vpnEnabled: true)
-    }
   }
 
   @objc func sceneDidBecomeActiveNotification(_ notification: NSNotification) {
@@ -1134,14 +1134,6 @@ public class BrowserViewController: UIViewController {
         name: UIApplication.willTerminateNotification,
         object: nil
       )
-      if profileController.profile.prefs.isBraveVPNAvailable {
-        $0.addObserver(
-          self,
-          selector: #selector(vpnConfigChanged),
-          name: .NEVPNConfigurationChange,
-          object: nil
-        )
-      }
     }
 
     func observeAdblockChangeForDataSavedP3A(from oldValue: Int) {
@@ -1180,29 +1172,6 @@ public class BrowserViewController: UIViewController {
     let dropInteraction = UIDropInteraction(delegate: self)
     view.addInteraction(dropInteraction)
     topToolbar.addInteraction(dropInteraction)
-
-    // Adding a small delay before fetching gives more reliability to it,
-    // epsecially when you are connected to a VPN.
-    if profileController.profile.prefs.isBraveVPNAvailable {
-      Task.delayed(bySeconds: 1.0) { @MainActor in
-        // Refresh Skus VPN Credentials before loading VPN state
-        let skusService = Skus.SkusServiceFactory.get(profile: self.profileController.profile)
-        await skusService?.refreshSkusCredentials()
-
-        self.vpnProductInfo.load()
-        if let customCredential = Preferences.VPN.skusCredential.value,
-          let customCredentialDomain = Preferences.VPN.skusCredentialDomain.value,
-          let vpnCredential = BraveSkusWebHelper.fetchVPNCredential(
-            customCredential,
-            domain: customCredentialDomain
-          )
-        {
-          BraveVPN.initialize(customCredential: vpnCredential)
-        } else {
-          BraveVPN.initialize(customCredential: nil)
-        }
-      }
-    }
 
     // Schedule Default Browser Local Notification
     // If notification is not already scheduled or
@@ -1245,8 +1214,6 @@ public class BrowserViewController: UIViewController {
         switch featureLinkageType {
         case .playlist:
           self.presentPlaylistController()
-        case .vpn:
-          self.navigationHelper.openVPNBuyScreen(iapObserver: self.iapObserver)
         default:
           return
         }
@@ -2010,6 +1977,7 @@ public class BrowserViewController: UIViewController {
     }
   }
 
+  #if !BRAVE_IOS_SLIM
   func showWeb3ServiceInterstitialPage(service: Web3Service, originalURL: URL) {
     if !profileController.braveWalletAPI.isAllowed {
       return
@@ -2034,6 +2002,7 @@ public class BrowserViewController: UIViewController {
 
     tab.loadRequest(PrivilegedRequest(url: internalUrl) as URLRequest)
   }
+  #endif
 
   override public func accessibilityPerformEscape() -> Bool {
     if isSearchContainerVisible {
@@ -2130,6 +2099,28 @@ public class BrowserViewController: UIViewController {
       tabManager.selectTab(tab)
     } else {
       openURLInNewTab(url, isPrivate: privateBrowsingManager.isPrivateBrowsing, isPrivileged: false)
+    }
+  }
+
+  public func openDestinationURL(_ destinationURL: URL) {
+    if presentedViewController != nil {
+      // dismiss to show the new tab
+      self.dismiss(animated: true)
+    }
+    if let url = tabManager.selectedTab?.visibleURL {
+      if InternalURL.isValid(url: url) {
+        select(url: destinationURL, isUserDefinedURLNavigation: false)
+      } else {
+        tabManager.addTabAndSelect(
+          URLRequest(url: destinationURL),
+          isPrivate: privateBrowsingManager.isPrivateBrowsing
+        )
+      }
+    } else {
+      _ = tabManager.addTabAndSelect(
+        URLRequest(url: destinationURL),
+        isPrivate: privateBrowsingManager.isPrivateBrowsing
+      )
     }
   }
 
@@ -2592,6 +2583,7 @@ extension BrowserViewController: TabsBarViewControllerDelegate {
   }
 }
 
+#if !BRAVE_IOS_SLIM
 extension BrowserViewController: WalletTabHelperDelegate {
   func showWalletNotification(_ tab: some TabState, origin: URLOrigin) {
     // only display notification when BVC is front and center
@@ -2699,6 +2691,7 @@ extension BrowserViewController: WalletTabHelperDelegate {
     return false
   }
 }
+#endif
 
 extension BrowserViewController: SearchViewControllerDelegate {
   func searchViewController(
@@ -2714,8 +2707,10 @@ extension BrowserViewController: SearchViewControllerDelegate {
     _ searchViewController: SearchViewController,
     didSubmitAIChat query: String
   ) {
+    #if !BRAVE_IOS_SLIM
     self.popToBVC()
     self.openBraveLeo(with: query)
+    #endif
   }
 
   func searchViewController(_ searchViewController: SearchViewController, didSelectURL url: URL) {
@@ -3011,6 +3006,7 @@ extension BrowserViewController: NewTabPageDelegate {
   }
 
   func showNewTabTakeoverInfoBarIfNeeded() {
+    #if !BRAVE_IOS_SLIM
     guard
       profileController.profile.prefs.boolean(forPath: kBraveAdsSponsoredEnabledPrefName)
     else { return }
@@ -3034,6 +3030,7 @@ extension BrowserViewController: NewTabPageDelegate {
       }
     )
     self.show(toast: newTabTakeoverInfoBar, duration: nil)
+    #endif
   }
 
   func isNewTabPageOccluded() -> Bool {
@@ -3079,9 +3076,11 @@ extension BrowserViewController: PreferencesObserver {
       // Toggling Google safe browsing requires a hard reset of Webkit configuration.
       tabManager.reset()
       tabManager.reloadSelectedTab()
+    #if !BRAVE_IOS_SLIM
     case Preferences.Rewards.hideRewardsIcon.key,
       Preferences.Rewards.rewardsToggledOnce.key:
       updateRewardsButtonState()
+    #endif
     case Preferences.Playlist.enablePlaylistURLBarButton.key:
       let selectedTab = tabManager.selectedTab
       updatePlaylistURLBar(
@@ -3098,8 +3097,6 @@ extension BrowserViewController: PreferencesObserver {
       } else {
         PrivacyReportsManager.scheduleNotification(debugMode: !AppConstants.isOfficialBuild)
       }
-    case Preferences.PrivacyReports.captureVPNAlerts.key:
-      PrivacyReportsManager.scheduleVPNAlertsTask()
     case Preferences.Privacy.screenTimeEnabled.key:
       if Preferences.Privacy.screenTimeEnabled.value, !ProcessInfo.processInfo.isiOSAppOnVisionOS {
         // Accessing `STWebpageController` on Vision OS results in a crash
@@ -3319,25 +3316,6 @@ extension BrowserViewController {
   }
 }
 
-extension BrowserViewController: BraveVPNInAppPurchaseObserverDelegate {
-  public func purchasedOrRestoredProduct(validateReceipt: Bool) {
-    // No-op
-  }
-
-  public func purchaseFailed(error: BraveVPNInAppPurchaseObserver.PurchaseError) {
-    // No-op
-  }
-
-  public func handlePromotedInAppPurchase() {
-    // Open VPN Buy Screen before system triggers buy action
-    // Delaying the VPN Screen launch delibrately to syncronize promoted purchase launch
-    Task.delayed(bySeconds: 2.0) { @MainActor in
-      self.popToBVC()
-      self.navigationHelper.openVPNBuyScreen(iapObserver: self.iapObserver)
-    }
-  }
-}
-
 // Certificate info
 extension BrowserViewController {
 
@@ -3398,6 +3376,7 @@ extension BrowserViewController {
   }
 }
 
+#if !BRAVE_IOS_SLIM
 extension BrowserViewController {
   func openBraveLeo(with query: String? = nil) {
     if !AIChatUtils.isAIChatEnabled(for: profileController.profile.prefs) {
@@ -3457,3 +3436,12 @@ extension BraveTalkJitsiCoordinator: AIChatBraveTalkJavascript {
     return nil
   }
 }
+#endif
+
+#if BRAVE_IOS_SLIM
+extension BrowserViewController {
+  func updateURLBarWalletButton() {
+    toolbarState.walletButtonState = .inactive
+  }
+}
+#endif

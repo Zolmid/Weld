@@ -10,7 +10,9 @@ import BraveShared
 import BraveShields
 import BraveStrings
 import BraveUI
+#if !BRAVE_IOS_SLIM
 import BraveWallet
+#endif
 import BraveWidgetsModels
 import BrowserMenu
 import CertificateUtilities
@@ -74,6 +76,9 @@ extension BrowserViewController: TopToolbarDelegate, SearchContainerViewControll
   }
 
   func topToolbarDidPressReload(_ topToolbar: TopToolbarView) {
+    #if BRAVE_IOS_SLIM
+    tabManager.selectedTab?.reload()
+    #else
     if let url = tabManager.selectedTab?.visibleURL {
       if let decentralizedDNSHelper = decentralizedDNSHelperFor(url: url) {
         topToolbarDidPressReloadTask?.cancel()
@@ -103,6 +108,7 @@ extension BrowserViewController: TopToolbarDelegate, SearchContainerViewControll
     } else {
       tabManager.selectedTab?.reload()
     }
+    #endif
   }
 
   func topToolbarDidPressStop(_ topToolbar: TopToolbarView) {
@@ -295,6 +301,7 @@ extension BrowserViewController: TopToolbarDelegate, SearchContainerViewControll
       return false
     }
 
+    #if !BRAVE_IOS_SLIM
     // check text is decentralized DNS supported domain
     if let decentralizedDNSHelper = self.decentralizedDNSHelperFor(url: fixupURL) {
       dismissSearchInput()
@@ -320,6 +327,7 @@ extension BrowserViewController: TopToolbarDelegate, SearchContainerViewControll
         break
       }
     }
+    #endif
 
     // The user entered a URL, so use it.
     // Determine if url navigation is done from favourites or bookmarks
@@ -346,7 +354,13 @@ extension BrowserViewController: TopToolbarDelegate, SearchContainerViewControll
       return
     }
 
+    #if BRAVE_IOS_SLIM
+    let isAIChatAvailable = false
+    #else
     let isPrivate = tabManager.selectedTab?.isPrivate ?? false
+    let isAIChatAvailable = !isPrivate && Preferences.AIChat.leoInQuickSearchBarEnabled.value
+      && AIChatUtils.isAIChatEnabled(for: profileController.profile.prefs)
+    #endif
     let container = SearchContainerViewController(
       tabManager: tabManager,
       bookmarkManager: bookmarkManager,
@@ -358,8 +372,7 @@ extension BrowserViewController: TopToolbarDelegate, SearchContainerViewControll
       ),
       privateBrowsingManager: privateBrowsingManager,
       speechRecognizer: speechRecognizer,
-      isAIChatAvailable: !isPrivate && Preferences.AIChat.leoInQuickSearchBarEnabled.value
-        && AIChatUtils.isAIChatEnabled(for: profileController.profile.prefs),
+      isAIChatAvailable: isAIChatAvailable,
       isPlaylistAvailable: profileController.profile.prefs.isPlaylistAvailable,
       searchDelegate: self,
       delegate: self,
@@ -705,9 +718,14 @@ extension BrowserViewController: TopToolbarDelegate, SearchContainerViewControll
   func topToolbarAvailableShortcutButtons(
     _ topToolbar: TopToolbarView
   ) -> OrderedSet<WidgetShortcut> {
+    #if BRAVE_IOS_SLIM
+    let isWalletAvailable = false
+    #else
+    let isWalletAvailable = profileController.braveWalletAPI.isAllowed
+    #endif
     return WidgetShortcut.eligibleButtonShortcuts(
       prefs: profileController.profile.prefs,
-      isWalletAvailable: profileController.braveWalletAPI.isAllowed
+      isWalletAvailable: isWalletAvailable
     )
   }
 
@@ -815,6 +833,7 @@ extension BrowserViewController: TopToolbarDelegate, SearchContainerViewControll
   }
 
   func topToolbarDidTapWalletButton(_ urlBar: TopToolbarView) {
+    #if !BRAVE_IOS_SLIM
     guard let selectedTab = tabManager.selectedTab,
       let tabDappStore = selectedTab.wallet?.tabDappStore,
       let origin = selectedTab.lastCommittedURL?.origin
@@ -824,6 +843,7 @@ extension BrowserViewController: TopToolbarDelegate, SearchContainerViewControll
     // System components sit on top so we want to dismiss it
     selectedTab.dismissFindInteraction()
     presentWalletPanel(from: origin, with: tabDappStore)
+    #endif
   }
 
   /// Handles selection of a recent search in the favorites screen: seeds the input field and, when

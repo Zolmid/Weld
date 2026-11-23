@@ -20,15 +20,6 @@
       }
     },
     {
-      "identity" : "guardianconnect",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/GuardianFirewall/GuardianConnect",
-      "state" : {
-        "revision" : "706cd111bd1c894c75d0f32b7f749451b8aab5ee",
-        "version" : "2.1.1"
-      }
-    },
-    {
       "identity" : "lottie-spm",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/airbnb/lottie-spm",

@@ -3,7 +3,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import BraveVPN
 import Preferences
 import XCTest
 
@@ -20,7 +19,6 @@ class AppReviewManagerTests: XCTestCase {
 
   private enum SubCriteriaType {
     case numberOfBookmarks
-    case paidVPNSubscription
     case walletConnectedDapp
     case numberOfPlaylistItems
     case syncEnabledWithTabSync
@@ -39,18 +37,6 @@ class AppReviewManagerTests: XCTestCase {
   }
 
   func testRevisedReviewPassingMainCriteriasPassingSubCriteria() {
-    // Paid VPN Subcription
-    resetAppReviewConstants()
-
-    generateMainCriterias(passing: true, failingCriteria: nil)
-    generateSubCriterias(failing: false, passingCriteria: .paidVPNSubscription)
-
-    XCTAssert(AppReviewManager.shared.checkLogicCriteriaSatisfied(for: .revised))
-
-    XCTAssert(AppReviewManager.shared.checkLogicCriteriaSatisfied(for: .revisedCrossPlatform))
-
-    XCTAssert(AppReviewManager.shared.checkLogicCriteriaSatisfied(for: .newsRatingCard))
-
     // Number Of Bookmarks
     resetAppReviewConstants()
 
@@ -88,11 +74,11 @@ class AppReviewManagerTests: XCTestCase {
     XCTAssert(AppReviewManager.shared.checkLogicCriteriaSatisfied(for: .newsRatingCard))
   }
 
-  func testRevisedReviewFailigMainCriteriaPassingVPNSubCriteria() {
+  func testRevisedReviewFailingMainCriteriaPassingSubCriteria() {
     resetAppReviewConstants()
 
-    generateMainCriterias(passing: false, failingCriteria: nil)
-    generateSubCriterias(failing: false, passingCriteria: nil)
+    generateMainCriterias(passing: false, failingCriteria: .launchCount)
+    generateSubCriterias(failing: false, passingCriteria: .numberOfBookmarks)
 
     XCTAssertFalse(AppReviewManager.shared.checkLogicCriteriaSatisfied(for: .revised))
 
@@ -101,7 +87,7 @@ class AppReviewManagerTests: XCTestCase {
     XCTAssertFalse(AppReviewManager.shared.checkLogicCriteriaSatisfied(for: .newsRatingCard))
   }
 
-  func testRevisedReviewPassingMainCriteriaFailingVPNSubCriteria() {
+  func testRevisedReviewPassingMainCriteriaFailingSubCriteria() {
     resetAppReviewConstants()
 
     generateMainCriterias(passing: true, failingCriteria: nil)
@@ -114,17 +100,17 @@ class AppReviewManagerTests: XCTestCase {
     XCTAssert(AppReviewManager.shared.checkLogicCriteriaSatisfied(for: .newsRatingCard))
   }
 
-  func testRevisedReviewFailigMainCriteriaFailingVPNSubCriteria() {
+  func testRevisedReviewFailingMainCriteriaFailingSubCriteria() {
     resetAppReviewConstants()
 
-    generateMainCriterias(passing: true, failingCriteria: nil)
+    generateMainCriterias(passing: false, failingCriteria: .launchCount)
     generateSubCriterias(failing: true, passingCriteria: nil)
 
     XCTAssertFalse(AppReviewManager.shared.checkLogicCriteriaSatisfied(for: .revised))
 
     XCTAssertFalse(AppReviewManager.shared.checkLogicCriteriaSatisfied(for: .revisedCrossPlatform))
 
-    XCTAssert(AppReviewManager.shared.checkLogicCriteriaSatisfied(for: .newsRatingCard))
+    XCTAssertFalse(AppReviewManager.shared.checkLogicCriteriaSatisfied(for: .newsRatingCard))
   }
 
   func testRevisedReviewFailingMainCriteriaDaysInBetween() {
@@ -163,7 +149,6 @@ class AppReviewManagerTests: XCTestCase {
     Preferences.Review.launchCount.reset()
     Preferences.Review.daysInUse.reset()
     Preferences.AppState.backgroundedCleanly.reset()
-    Preferences.VPN.expirationDate.value = nil
     Preferences.Review.numberBookmarksAdded.reset()
     Preferences.Review.dateWalletConnectedToDapp.value = nil
     Preferences.Review.numberPlaylistItemsAdded.reset()
@@ -229,7 +214,6 @@ class AppReviewManagerTests: XCTestCase {
       Preferences.Review.numberBookmarksAdded.value = 1
       Preferences.Review.dateWalletConnectedToDapp.value = nil
       Preferences.Review.numberPlaylistItemsAdded.value = 3
-      Preferences.VPN.expirationDate.value = Date().addingTimeInterval(-5.days)
       Preferences.Chromium.syncOpenTabsEnabled.value = false
       Preferences.Chromium.syncEnabled.value = false
       return
@@ -246,8 +230,6 @@ class AppReviewManagerTests: XCTestCase {
       case .syncEnabledWithTabSync:
         Preferences.Chromium.syncOpenTabsEnabled.value = true
         Preferences.Chromium.syncEnabled.value = true
-      case .paidVPNSubscription:
-        Preferences.VPN.expirationDate.value = Date().addingTimeInterval(5.days)
       }
     }
   }

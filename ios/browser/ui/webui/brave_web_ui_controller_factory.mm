@@ -13,6 +13,7 @@
 #include "brave/components/ai_chat/core/common/buildflags/buildflags.h"
 #include "brave/components/brave_account/features.h"
 #include "brave/components/brave_ads/buildflags/buildflags.h"
+#include "brave/components/brave_rewards/core/buildflags/buildflags.h"
 #include "brave/components/brave_wallet/common/buildflags/buildflags.h"
 #include "brave/components/constants/pref_names.h"
 #include "brave/components/constants/url_constants.h"
@@ -28,7 +29,9 @@
 #include "url/gurl.h"
 
 #if BUILDFLAG(ENABLE_BRAVE_ADS)
+#if BUILDFLAG(ENABLE_BRAVE_REWARDS)
 #include "brave/components/brave_rewards/core/pref_names.h"
+#endif
 #include "brave/ios/browser/ui/webui/ads/ads_internals_ui.h"
 #endif
 
@@ -68,11 +71,13 @@ template <>
 std::unique_ptr<WebUIIOSController> NewWebUIIOS<AdsInternalsUI>(
     WebUIIOS* web_ui,
     const GURL& url) {
+#if BUILDFLAG(ENABLE_BRAVE_REWARDS)
   ProfileIOS* profile = ProfileIOS::FromWebUIIOS(web_ui);
   if (profile->GetPrefs()->GetBoolean(
           brave_rewards::prefs::kDisabledByPolicy)) {
     return nullptr;
   }
+#endif
   return std::make_unique<AdsInternalsUI>(web_ui, url);
 }
 #endif

@@ -1,0 +1,27 @@
+diff --git a/chrome/browser/ui/views/user_education/impl/browser_user_education_interface_impl.cc b/chrome/browser/ui/views/user_education/impl/browser_user_education_interface_impl.cc
+--- a/chrome/browser/ui/views/user_education/impl/browser_user_education_interface_impl.cc
++++ b/chrome/browser/ui/views/user_education/impl/browser_user_education_interface_impl.cc
+@@ -6,6 +6,7 @@
+ 
+ #include <optional>
+ 
++#include "brave/build/promotion_buildflags.h"
+ #include "base/check.h"
+ #include "base/check_is_test.h"
+ #include "base/check_op.h"
+@@ -268,11 +269,15 @@
+ user_education::DisplayNewBadge
+ BrowserUserEducationInterfaceImpl::MaybeShowNewBadgeFor(
+     const base::Feature& feature) {
++#if !BUILDFLAG(ENABLE_BRAVE_PROMOTIONS)
++  return user_education::DisplayNewBadge();
++#else
+   auto* const service = GetUserEducationService();
+   if (!service || !service->new_badge_controller()) {
+     return user_education::DisplayNewBadge();
+   }
+   return service->new_badge_controller()->MaybeShowNewBadge(feature);
++#endif
+ }
+ 
+ void BrowserUserEducationInterfaceImpl::NotifyNewBadgeFeatureUsed(

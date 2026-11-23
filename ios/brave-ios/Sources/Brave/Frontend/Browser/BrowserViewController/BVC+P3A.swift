@@ -264,33 +264,6 @@ extension BrowserViewController {
     )
   }
 
-  func recordVPNUsageP3A(vpnEnabled: Bool) {
-    let usage = P3AFeatureUsage.braveVPNUsage
-    var braveVPNDaysInMonthUsedStorage = P3ATimedStorage<Int>.braveVPNDaysInMonthUsedStorage
-
-    if vpnEnabled {
-      usage.recordUsage()
-      braveVPNDaysInMonthUsedStorage.replaceTodaysRecordsIfLargest(value: 1)
-    } else {
-      usage.recordHistogram()
-    }
-
-    UmaHistogramRecordValueToBucket(
-      "Brave.VPN.DaysInMonthUsed",
-      buckets: [
-        0,
-        1,
-        2,
-        .r(3...5),
-        .r(6...10),
-        .r(11...15),
-        .r(16...20),
-        .r(21...),
-      ],
-      value: braveVPNDaysInMonthUsedStorage.combinedValue
-    )
-  }
-
   func recordAccessibilityDisplayZoomEnabledP3A() {
     // Q100 Do you have iOS display zoom enabled?
     let isDisplayZoomEnabled = UIScreen.main.scale < UIScreen.main.nativeScale
@@ -361,6 +334,7 @@ extension BrowserViewController {
   }
 
   func recordAdsUsageType() {
+    #if !BRAVE_IOS_SLIM
     enum Answer: Int, CaseIterable {
       case none = 0
       case ntpOnly = 1
@@ -379,6 +353,7 @@ extension BrowserViewController {
       answer = .ntpOnly
     }
     UmaHistogramEnumeration("Brave.Rewards.AdTypesEnabled", sample: answer)
+    #endif
   }
 
   func recordNavigationActionP3A(isNavigationActionForward: Bool) {
@@ -424,20 +399,9 @@ extension BrowserViewController {
   }
 }
 
-extension P3AFeatureUsage {
-  fileprivate static let braveVPNUsage: Self = .init(
-    name: "vpn-usage",
-    histogram: "Brave.VPN.LastUsageTime",
-    returningUserHistogram: "Brave.VPN.NewUserReturning"
-  )
-}
-
 extension P3ATimedStorage where Value == Int {
   /// Holds timed storage for question 21 (`Brave.Savings.BandwidthSavingsMB`)
   fileprivate static var dataSavedStorage: Self { .init(name: "data-saved", lifetimeInDays: 7) }
-  fileprivate static var braveVPNDaysInMonthUsedStorage: Self {
-    .init(name: "vpn-days-in-month-used", lifetimeInDays: 30)
-  }
   fileprivate static var navigationActionPerformedStorage: Self {
     .init(name: "navigation-action-performed", lifetimeInDays: 7)
   }

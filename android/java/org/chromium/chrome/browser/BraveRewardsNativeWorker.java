@@ -60,6 +60,9 @@ public class BraveRewardsNativeWorker {
     private static final Object sLock = new Object();
 
     public static BraveRewardsNativeWorker getInstance() {
+        if (!BraveConfig.ENABLE_REWARDS) {
+            return null;
+        }
         synchronized (sLock) {
             if (sInstance == null) {
                 sInstance = new BraveRewardsNativeWorker();

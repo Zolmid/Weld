@@ -18,8 +18,11 @@ import org.chromium.components.user_prefs.UserPrefs;
 public class BraveRewardsPolicy {
     private static @Nullable Boolean sDisabledByPolicyForTesting;
 
-    /** Returns true if Rewards is disabled by policy for the given profile. */
+    /** Returns true if Rewards is unavailable in this build or disabled by policy. */
     public static boolean isDisabledByPolicy(@Nullable Profile profile) {
+        if (!BraveConfig.ENABLE_REWARDS) {
+            return true;
+        }
         if (sDisabledByPolicyForTesting != null) {
             return sDisabledByPolicyForTesting;
         }

@@ -12,6 +12,10 @@ import os
 import platform
 import sys
 import inspect
+import plistlib
+import json
+import subprocess
+from pathlib import Path
 
 this_dir = os.path.dirname(os.path.abspath(__file__))
 brave_root_dir = os.path.join(
@@ -66,6 +70,18 @@ def main():
     # paths in the webpack config to be parsed correctly.
     os.chdir(brave_root_dir)
 
+    prebuilt_core_dir = os.environ.get('BRAVE_IOS_PREBUILT_CORE_DIR')
+    slim = os.environ.get('BRAVE_IOS_SLIM', '0')
+    if slim not in ('0', '1'):
+        raise ValueError('BRAVE_IOS_SLIM must be 0 or 1')
+    if slim == '1' and not prebuilt_core_dir:
+        raise ValueError('BRAVE_IOS_SLIM=1 requires BRAVE_IOS_PREBUILT_CORE_DIR')
+    if prebuilt_core_dir:
+        UsePrebuiltCore(prebuilt_core_dir, options.platform_name, target_arch, slim == '1')
+        if not options.only_update_symlink:
+            PackJavaScript()
+        return
+
     if options.only_update_symlink:
         # If we're choosing to only update the symlink we should validate
         # that the resulting symlink will point to a valid folder
@@ -81,6 +97,7 @@ def main():
     else:
         BuildCore(options.configuration, target_arch, target_environment)
         PackJavaScript()
+    ValidateCoreConfiguration(Path(output_dir), options.platform_name, target_arch, False)
     UpdateSymlink(options.configuration, target_arch, target_environment)
 
 
@@ -91,6 +108,98 @@ def BuildOutputDirectory(config, platform_name):
     if platform_name == 'iphonesimulator':
         directory_name += '_simulator'
     return os.path.normpath(os.path.join(src_dir, 'out', directory_name))
+
+
+SLIM_FLAGS = (
+    'enable_ai_chat', 'enable_local_ai', 'enable_brave_wallet',
+    'enable_brave_rewards', 'enable_brave_ads', 'enable_brave_vpn_v1',
+    'enable_brave_vpn_v2',
+)
+
+
+def ValidateCoreConfiguration(output_dir, platform_name, target_arch, slim):
+    args_files = [output_dir / 'args.gn', output_dir / 'args_generated.gni']
+    # GN leaves args.xcconfig unchanged when its contents match the new graph.
+    if not (output_dir / 'args.xcconfig').is_file():
+        raise FileNotFoundError(output_dir / 'args.xcconfig')
+    if max(path.stat().st_mtime_ns for path in args_files) > (
+        output_dir / 'build.ninja'
+    ).stat().st_mtime_ns:
+        raise ValueError(f'{output_dir}: GN configuration is stale')
+
+    gn = Path(src_dir, 'buildtools', 'mac', 'gn')
+    result = subprocess.run(
+        [str(gn), 'args', str(output_dir), '--list', '--json'],
+        cwd=src_dir, check=True, capture_output=True, text=True,
+    )
+    args = {entry['name']: entry for entry in json.loads(result.stdout)}
+    def value(name):
+        entry = args[name]
+        return entry.get('current', entry['default'])['value']
+
+    expected_environment = 'simulator' if platform_name == 'iphonesimulator' else 'device'
+    if (value('target_os') != '"ios"' or value('target_cpu') != f'"{target_arch}"'
+            or value('target_environment') != f'"{expected_environment}"'):
+        raise ValueError(f'{output_dir}: GN target does not match {platform_name}/{target_arch}')
+    if slim:
+        for flag in SLIM_FLAGS:
+            current = args[flag].get('current', {})
+            if current.get('value') != 'false' or Path(current.get('file', '')).name not in (
+                'args.gn', 'args_generated.gni'
+            ):
+                raise ValueError(f'{output_dir}: slim requires explicit {flag}=false')
+    elif any(value(flag) != 'true' for flag in ('enable_ai_chat', 'enable_brave_wallet')):
+        raise ValueError(f'{output_dir}: AI and wallet require BRAVE_IOS_SLIM=1')
+
+
+def UsePrebuiltCore(directory, platform_name, target_arch, slim):
+    """Select an existing GN output without rebuilding a different variant."""
+    output_root = Path(src_dir, 'out').resolve()
+    output_dir = (output_root / directory).resolve()
+    if output_root not in output_dir.parents:
+        raise ValueError('BRAVE_IOS_PREBUILT_CORE_DIR must be inside src/out')
+
+    package = output_dir / 'BraveCore.xcframework'
+    with (package / 'Info.plist').open('rb') as info_file:
+        libraries = plistlib.load(info_file)['AvailableLibraries']
+    simulator = platform_name == 'iphonesimulator'
+    binaries = [
+        package / library['LibraryIdentifier'] / library['BinaryPath']
+        for library in libraries
+        if library['SupportedPlatform'] == 'ios'
+        and library.get('SupportedPlatformVariant') == (
+            'simulator' if simulator else None
+        )
+        and target_arch in library['SupportedArchitectures']
+    ]
+    if platform_name not in ('iphoneos', 'iphonesimulator') or not any(
+        binary.is_file() for binary in binaries
+    ):
+        raise ValueError(f'{package} has no binary for {platform_name}/{target_arch}')
+    if any(binary.stat().st_mtime_ns < max(
+        (output_dir / name).stat().st_mtime_ns
+        for name in ('args.gn', 'args_generated.gni')
+    ) for binary in binaries if binary.is_file()):
+        raise ValueError(f'{package}: binary predates GN arguments')
+    for filename in ('args.xcconfig', 'NalaAssets.xcframework',
+                     'PartitionAllocSupport.xcframework'):
+        if not (output_dir / filename).exists():
+            raise FileNotFoundError(output_dir / filename)
+
+    ValidateCoreConfiguration(output_dir, platform_name, target_arch, slim)
+
+    current_link = output_root / 'ios_current_link'
+    if os.environ.get('BRAVE_IOS_REQUIRE_SELECTED_CORE') == '1' and (
+        not current_link.is_symlink() or current_link.resolve() != output_dir
+    ):
+        raise ValueError('Select the prebuilt core before starting Xcode; package and xcconfig loading precede the scheme preaction')
+    if current_link.is_symlink() and current_link.resolve() == output_dir:
+        return
+    if current_link.exists() and not current_link.is_symlink():
+        raise ValueError(f'Preserve the bootstrap directory at {current_link} before selecting a prebuilt core')
+    temporary_link = output_root / f'.ios_current_link.{os.getpid()}'
+    temporary_link.symlink_to(output_dir)
+    temporary_link.replace(current_link)
 
 
 def UpdateSymlink(config, target_arch, target_environment):

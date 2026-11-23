@@ -8,6 +8,8 @@
 
 #import <Foundation/Foundation.h>
 
+#include "brave_ios_public_buildflags.h"
+
 @class BraveBookmarksAPI, BraveHistoryAPI, BravePasswordAPI, BraveOpenTabsAPI,
     BraveSendTabAPI, BraveSyncAPI, BraveSyncProfileServiceIOS,
     BraveTabGeneratorAPI, BraveWalletAPI, BraveStats, AIChat,
@@ -29,7 +31,9 @@ OBJC_EXPORT
 @property(readonly) BraveSyncAPI* syncAPI;
 @property(readonly) BraveSyncProfileServiceIOS* syncProfileService;
 @property(readonly) BraveTabGeneratorAPI* tabGeneratorAPI;
+#if BRAVE_IOS_HAS_WALLET
 @property(readonly) BraveWalletAPI* braveWalletAPI;
+#endif
 @property(readonly) BraveStats* braveStats;
 @property(readonly) id<IpfsAPI> ipfsAPI;
 /// The default content settings for regular browsing windows

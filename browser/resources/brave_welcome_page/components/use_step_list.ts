@@ -5,6 +5,7 @@
 
 import * as React from 'react'
 
+import { useWelcomeApi } from '../api/welcome_api_context'
 import { useImportableProfiles } from './use_importable_profiles'
 import {
   hasFeaturesAvailable,
@@ -27,6 +28,7 @@ export type Step = (typeof baseSteps)[number]
 
 // Returns the current list of visible Welcome steps.
 export function useStepList() {
+  const promotionsEnabled = useWelcomeApi().usePromotionsEnabledData()
   const profiles = useImportableProfiles()
   const features = useProductFeatures()
   const metrics = useAvailableMetrics()
@@ -34,13 +36,15 @@ export function useStepList() {
   return React.useMemo(() => {
     const hidden = new Set<Step>()
 
-    // Hide the import step if there are no importable profiles.
-    if (!profiles?.length) {
+    if (!promotionsEnabled) {
+      hidden.add('appearance')
+    }
+
+    if (!promotionsEnabled || !profiles?.length) {
       hidden.add('import')
     }
 
-    // Hide the features step if there are no products to offer.
-    if (!hasFeaturesAvailable(features)) {
+    if (!promotionsEnabled || !hasFeaturesAvailable(features)) {
       hidden.add('features')
     }
 
@@ -50,5 +54,5 @@ export function useStepList() {
     }
 
     return baseSteps.filter((step) => !hidden.has(step))
-  }, [profiles, features, metrics])
+  }, [promotionsEnabled, profiles, features, metrics])
 }

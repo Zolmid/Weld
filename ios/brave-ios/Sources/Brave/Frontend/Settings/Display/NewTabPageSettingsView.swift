@@ -17,7 +17,9 @@ struct NewTabPageSettingsView: View {
   @ObservedObject private var showNewTabPrivacyHub = Preferences.NewTabPage.showNewTabPrivacyHub
   @ObservedObject private var topSitesModeSelection = Preferences.NewTabPage.topSitesMode
 
+  #if !BRAVE_IOS_SLIM
   @Bindable private var isSponsoredAdsEnabled: PrefBackedBoolean
+  #endif
 
   init(
     isSponsoredBackgroundsSupported: Bool,
@@ -26,13 +28,16 @@ struct NewTabPageSettingsView: View {
   ) {
     self.isSponsoredBackgroundsSupported = isSponsoredBackgroundsSupported
     self.linkTapped = linkTapped
+    #if !BRAVE_IOS_SLIM
     self.isSponsoredAdsEnabled = .init(prefs: prefs, key: kBraveAdsSponsoredEnabledPrefName)
+    #endif
   }
 
   var body: some View {
     Form {
       Section {
         Toggle(Strings.NTP.settingsBackgroundImages, isOn: $backgroundImages.value)
+        #if !BRAVE_IOS_SLIM
         if backgroundImages.value, isSponsoredBackgroundsSupported {
           NavigationLink {
             BackgroundMediaTypePicker(
@@ -57,6 +62,7 @@ struct NewTabPageSettingsView: View {
             }
           }
         }
+        #endif
       } header: {
         Text(Strings.NTP.settingsBackgroundImages)
       }

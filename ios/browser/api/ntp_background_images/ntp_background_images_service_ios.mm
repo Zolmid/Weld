@@ -100,9 +100,10 @@ class AdsServiceObserverBridge : public brave_ads::AdsServiceObserver {
   if ((self = [super init])) {
     _service = std::move(service);
     _adsService = ads_service;
-    _adsServiceObserverBridge =
-        std::make_unique<AdsServiceObserverBridge>(self);
-    _adsService->AddObserver(_adsServiceObserverBridge.get());
+    if (_adsService) {
+      _adsServiceObserverBridge = std::make_unique<AdsServiceObserverBridge>(self);
+      _adsService->AddObserver(_adsServiceObserverBridge.get());
+    }
     _observerBridge =
         std::make_unique<NTPBackgroundImagesServiceObserverBridge>(self);
     _service->AddObserver(_observerBridge.get());
@@ -112,7 +113,9 @@ class AdsServiceObserverBridge : public brave_ads::AdsServiceObserver {
 }
 
 - (void)dealloc {
-  _adsService->RemoveObserver(_adsServiceObserverBridge.get());
+  if (_adsService) {
+    _adsService->RemoveObserver(_adsServiceObserverBridge.get());
+  }
   _service->RemoveObserver(_observerBridge.get());
 }
 
@@ -130,6 +133,9 @@ class AdsServiceObserverBridge : public brave_ads::AdsServiceObserver {
 }
 
 - (NTPSponsoredImageData*)sponsoredImageData {
+  if (!_adsService) {
+    return nil;
+  }
   auto* data = _service->GetNewTabTakeover(/*supports_rich_media=*/false);
   if (data == nullptr) {
     return nil;
@@ -147,7 +153,9 @@ class AdsServiceObserverBridge : public brave_ads::AdsServiceObserver {
 }
 
 - (void)updateSponsoredImageComponentIfNeeded {
-  _service->MaybeCheckForSponsoredComponentUpdate();
+  if (_adsService) {
+    _service->MaybeCheckForSponsoredComponentUpdate();
+  }
 }
 
 - (void)onUpdatedNTPBackgroundImagesData:
@@ -159,7 +167,7 @@ class AdsServiceObserverBridge : public brave_ads::AdsServiceObserver {
 
 - (void)onDeprecatedUpdatedNTPSponsoredContentData:
     (ntp_background_images::NTPSponsoredContentData*)data {
-  if (self.sponsoredImageDataUpdated) {
+  if (_adsService && self.sponsoredImageDataUpdated) {
     NTPSponsoredImageData* wrappedData = nil;
     if (data != nullptr) {
       wrappedData = [[NTPSponsoredImageData alloc] initWithData:*data];

@@ -7,8 +7,9 @@ import AVKit
 import BraveCore
 import BraveShared
 import BraveUI
-import BraveVPN
+#if !BRAVE_IOS_SLIM
 import BraveWallet
+#endif
 import BrowserMenu
 import Data
 import Foundation
@@ -21,6 +22,7 @@ import os.log
 
 extension BrowserViewController {
   private var settingsController: SettingsViewController {
+    #if !BRAVE_IOS_SLIM
     let isPrivateMode = privateBrowsingManager.isPrivateBrowsing
     let keyringService = BraveWallet.KeyringServiceFactory.get(privateMode: isPrivateMode)
     let walletService = BraveWallet.ServiceFactory.get(privateMode: isPrivateMode)
@@ -47,6 +49,7 @@ extension BrowserViewController {
         privateMode: isPrivateMode
       )
     }
+    #endif
 
     let vc = SettingsViewController(
       profile: self.profile,
@@ -57,14 +60,17 @@ extension BrowserViewController {
       p3aUtils: self.braveCore.p3aUtils,
       braveCore: self.profileController,
       localState: self.braveCore.localState,
-      attributionManager: attributionManager,
-      keyringStore: keyringStore,
-      cryptoStore: cryptoStore
+      attributionManager: attributionManager
     )
+    #if !BRAVE_IOS_SLIM
+    vc.keyringStore = keyringStore
+    vc.cryptoStore = cryptoStore
+    #endif
     vc.settingsDelegate = self
     return vc
   }
 
+  #if !BRAVE_IOS_SLIM
   /// Presents Wallet without an origin (ex. from menu)
   func presentWallet() {
     self.dismiss(animated: true) {
@@ -90,6 +96,7 @@ extension BrowserViewController {
       self.present(vc, animated: true)
     }
   }
+  #endif
 
   public func presentPlaylistController() {
     if !profileController.profile.prefs.isPlaylistAvailable {
@@ -130,9 +137,6 @@ extension BrowserViewController {
     pageURL: URL?
   ) {
     var actions: [Action] = []
-    if profileController.profile.prefs.isBraveVPNAvailable {
-      actions.append(vpnMenuAction)
-    }
     actions.append(contentsOf: destinationMenuActions(for: pageURL))
     actions.append(contentsOf: pageActions(for: pageURL, tab: tab))
     var pageActivities: Set<Action> = Set(
@@ -194,14 +198,6 @@ extension BrowserViewController {
         switch action {
         case .settings:
           let vc = self.settingsController
-          self.dismiss(animated: true) {
-            self.presentSettingsNavigation(with: vc)
-          }
-        case .vpnRegionPicker:
-          let vc = UIHostingController(
-            rootView: BraveVPNRegionListView(onServerRegionSet: nil)
-          )
-          vc.title = Strings.VPN.vpnRegionListServerScreenTitle
           self.dismiss(animated: true) {
             self.presentSettingsNavigation(with: vc)
           }
@@ -351,127 +347,10 @@ extension BrowserViewController {
     })();
     """
 
-  private var vpnMenuAction: Action {
-    let alertForExpiredState: () -> UIAlertController? = { [unowned self] in
-      if !BraveVPN.isSkusCredentialSessionExpired {
-        return nil
-      }
-      return vpnSessionExpiredStateAlert(loginCallback: { _ in
-        self.openURLInNewTab(
-          .brave.account,
-          isPrivate: self.privateBrowsingManager.isPrivateBrowsing,
-          isPrivileged: false
-        )
-      })
-    }
-
-    let vpnState = BraveVPN.vpnState
-    switch vpnState {
-    case .notPurchased, .expired:
-      return .init(id: .vpn) { @MainActor [unowned self] _ in
-        if !BraveVPNProductInfo.isComplete {
-          // Reattempt to connect to the App Store to get VPN prices.
-          vpnProductInfo.load()
-          return .none
-        }
-
-        if let alert = alertForExpiredState() {
-          self.dismiss(animated: true) {
-            self.present(alert, animated: true)
-          }
-          return .none
-        }
-
-        // Expired Subcriptions can cause glitch because of connect on demand
-        // Disconnect VPN before showing Purchase
-        BraveVPN.disconnect(skipChecks: true)
-        guard BraveVPN.vpnState.isPaywallEnabled else { return .none }
-
-        let vpnPaywallView = BraveVPNPaywallView(
-          openVPNAuthenticationInNewTab: { [weak self] in
-            guard let self else { return }
-            self.popToBVC()
-            self.openURLInNewTab(
-              .brave.braveVPNRefreshCredentials,
-              isPrivate: self.privateBrowsingManager.isPrivateBrowsing,
-              isPrivileged: false
-            )
-          },
-          openDirectCheckoutInNewTab: { [weak self] in
-            guard let self else { return }
-            popToBVC()
-            openURLInNewTab(
-              .brave.braveVPNCheckoutURL,
-              isPrivate: self.privateBrowsingManager.isPrivateBrowsing,
-              isPrivileged: false
-            )
-          },
-          openLearnMoreInNewTab: { [weak self] in
-            guard let self else { return }
-            popToBVC()
-            openURLInNewTab(
-              .brave.braveVPNLearnMoreURL,
-              isPrivate: self.privateBrowsingManager.isPrivateBrowsing,
-              isPrivileged: false
-            )
-          },
-          installVPNProfile: { [weak self] in
-            guard let self else { return }
-            self.popToBVC { [weak self] in
-              self?.present(UIHostingController(rootView: InstallVPNProfileView()), animated: true)
-            }
-          }
-        )
-
-        let vc = UIHostingController(rootView: vpnPaywallView)
-        self.dismiss(animated: true) {
-          self.present(vc, animated: true)
-        }
-        return .none
-      }
-    case .purchased:
-      let isConnected = BraveVPN.isConnected || BraveVPN.isConnecting
-      return .init(
-        id: .vpn,
-        title: isConnected ? Strings.VPN.vpnOnMenuButtonTitle : Strings.VPN.vpnOffMenuButtonTitle,
-        state: isConnected
-      ) { @MainActor [unowned self] _ in
-        if let alert = alertForExpiredState() {
-          self.dismiss(animated: true) {
-            self.present(alert, animated: true)
-          }
-          return .none
-        }
-
-        if BraveVPN.isConnected || BraveVPN.isConnecting {
-          await withCheckedContinuation { continuation in
-            BraveVPN.disconnect { error in
-              continuation.resume()
-            }
-          }
-        } else {
-          await withCheckedContinuation { continuation in
-            BraveVPN.reconnect { success in
-              continuation.resume()
-            }
-          }
-          // FIXME: VPN activity donation
-          // Donate Enable VPN Activity for suggestions
-          // let enableVPNActivity = ActivityShortcutManager.shared.createShortcutActivity(
-          //   type: .enableBraveVPN
-          // )
-          // Does this need to be attached to the menu specifically?
-          // browserMenuController.userActivity = enableVPNActivity
-          // enableVPNActivity.becomeCurrent()
-        }
-        try? await Task.sleep(for: .milliseconds(100))
-        return .updateAction(vpnMenuAction)
-      }
-    }
-  }
-
   private func destinationMenuActions(for pageURL: URL?) -> [Action] {
+    #if !BRAVE_IOS_SLIM
     let isPrivateBrowsing = privateBrowsingManager.isPrivateBrowsing
+    #endif
     var actions: [Action] = [
       .init(id: .bookmarks) { @MainActor [unowned self] _ in
         let vc = BookmarksViewController(
@@ -526,6 +405,7 @@ extension BrowserViewController {
         }
       )
     }
+    #if !BRAVE_IOS_SLIM
     if profileController.braveWalletAPI.isAllowed {
       actions.append(
         .init(
@@ -551,6 +431,7 @@ extension BrowserViewController {
         }
       )
     }
+    #endif
     if profileController.profile.prefs.isBraveTalkAvailable {
       actions.append(
         .init(id: .braveTalk) { @MainActor [unowned self] _ in

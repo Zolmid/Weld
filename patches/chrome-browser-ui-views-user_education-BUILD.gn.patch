@@ -1,0 +1,11 @@
+diff --git a/chrome/browser/ui/views/user_education/BUILD.gn b/chrome/browser/ui/views/user_education/BUILD.gn
+--- a/chrome/browser/ui/views/user_education/BUILD.gn
++++ b/chrome/browser/ui/views/user_education/BUILD.gn
+@@ -79,6 +79,7 @@
+   public_deps = [ ":user_education" ]
+ 
+   deps = [
++    "//brave/build:promotion_buildflags",
+     "//chrome/browser/actor",
+     "//chrome/browser/background/glic",
+     "//chrome/browser/desktop_to_mobile_promos:utils",

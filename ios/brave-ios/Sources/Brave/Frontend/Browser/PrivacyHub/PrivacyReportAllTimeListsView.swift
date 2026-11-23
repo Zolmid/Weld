@@ -51,21 +51,6 @@ struct PrivacyReportAllTimeListsView: View {
     .padding(.vertical, 12)
   }
 
-  @ViewBuilder
-  private func blockedLabels(by source: PrivacyReportsTracker.Source?) -> some View {
-    switch source {
-    case .shields:
-      PrivacyReportsView.BlockedByShieldsLabel()
-    case .vpn:
-      PrivacyReportsView.BlockedByVPNLabel()
-    case .both:
-      PrivacyReportsView.BlockedByShieldsLabel()
-      PrivacyReportsView.BlockedByVPNLabel()
-    case .none:
-      EmptyView()
-    }
-  }
-
   private var trackersList: some View {
     List {
       Section {
@@ -85,14 +70,14 @@ struct PrivacyReportAllTimeListsView: View {
                     Text(Strings.PrivacyHub.blockedBy)
                       .foregroundColor(Color(braveSystemName: .textSecondary))
 
-                    blockedLabels(by: item.source)
+                    PrivacyReportsView.BlockedByShieldsLabel()
                   }
                 } else {
                   HStack(spacing: 4) {
                     Text(Strings.PrivacyHub.blockedBy)
                       .foregroundColor(Color(braveSystemName: .textSecondary))
 
-                    blockedLabels(by: item.source)
+                    PrivacyReportsView.BlockedByShieldsLabel()
                   }
                 }
               }
@@ -169,13 +154,10 @@ struct PrivacyReportAllTimeListsView: View {
     }
     .onAppear {
       BlockedResource.allTimeMostFrequentTrackers { allTimeListTrackers in
-        BraveVPNAlert.allByHostCount { vpnItems in
-          trackers = PrivacyReportsTracker.merge(
-            shieldItems: allTimeListTrackers,
-            vpnItems: vpnItems
-          )
-          trackersLoading = false
-        }
+        trackers = allTimeListTrackers
+          .map { PrivacyReportsTracker(name: $0.name, count: $0.count) }
+          .sorted { $0.count > $1.count }
+        trackersLoading = false
       }
 
       BlockedResource.allTimeMostRiskyWebsites { riskyWebsites in

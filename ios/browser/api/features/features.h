@@ -8,6 +8,8 @@
 
 #import <Foundation/Foundation.h>
 
+#include "brave_ios_public_buildflags.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 OBJC_EXPORT
@@ -20,8 +22,10 @@ OBJC_EXPORT
 @interface FeatureList : NSObject
 // MARK: - Brave Features
 
+#if BRAVE_IOS_HAS_AI_CHAT
 @property(class, nonatomic, readonly) Feature* kAIChat;
 @property(class, nonatomic, readonly) Feature* kAIChatHistory;
+#endif
 @property(class, nonatomic, readonly)
     Feature* kAdblockOverrideRegexDiscardPolicy;
 @property(class, nonatomic, readonly)

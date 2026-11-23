@@ -26,6 +26,7 @@ import org.chromium.brave_shields.mojom.FilterListConstants;
 import org.chromium.build.annotations.NullMarked;
 import org.chromium.build.annotations.Nullable;
 import org.chromium.chrome.R;
+import org.chromium.chrome.browser.BraveConfig;
 import org.chromium.chrome.browser.BraveFeatureUtil;
 import org.chromium.chrome.browser.BraveLaunchIntentDispatcher;
 import org.chromium.chrome.browser.BraveLocalState;
@@ -433,7 +434,7 @@ public class BravePrivacySettings extends PrivacySettings {
         }
 
         // Hide Sponsored Ads setting if Brave Rewards is disabled by policy
-        if (BraveRewardsPolicy.isDisabledByPolicy(getProfile())) {
+        if (!BraveConfig.ENABLE_ADS || BraveRewardsPolicy.isDisabledByPolicy(getProfile())) {
             removePreferenceIfPresent(PREF_SPONSORED_ADS_ENABLED);
             removePreferenceIfPresent(PREF_SPONSORED_ADS_LEARN_MORE);
             mSponsoredAdsEnabled = null;
@@ -1074,7 +1075,7 @@ public class BravePrivacySettings extends PrivacySettings {
                             .isManagedPreference(BravePref.STATS_REPORTING_ENABLED)) {
                         indexData.removeEntryForKey(frag, PREF_BRAVE_STATS_USAGE_PING);
                     }
-                    if (BraveRewardsPolicy.isDisabledByPolicy(profile)) {
+                    if (!BraveConfig.ENABLE_ADS || BraveRewardsPolicy.isDisabledByPolicy(profile)) {
                         indexData.removeEntryForKey(frag, PREF_SPONSORED_ADS_ENABLED);
                     }
 

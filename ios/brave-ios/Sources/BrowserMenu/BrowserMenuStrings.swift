@@ -28,12 +28,6 @@ extension Strings {
       comment:
         "The title of a button that shows a screen that lets the user customize which actions are visible on the menu"
     )
-    public static let vpnButtonTitle = NSLocalizedString(
-      "BrowserMenu.vpnButtonTitle",
-      bundle: .module,
-      value: "VPN",
-      comment: "A title on a button that lets the user switch the active VPN's selected region."
-    )
     public static let customizeTitle = NSLocalizedString(
       "BrowserMenu.customizeTitle",
       bundle: .module,
@@ -148,13 +142,6 @@ extension Strings {
       value: "Print",
       comment:
         "A button title shown on the menu that when tapped lets the user print the page they're viewing"
-    )
-    public static let vpn = NSLocalizedString(
-      "ActionTitles.vpn",
-      bundle: .module,
-      value: "VPN",
-      comment:
-        "A button title shown on the menu that when tapped presents a Brave VPN paywall"
     )
     public static let translate = NSLocalizedString(
       "ActionTitles.translate",

@@ -7,10 +7,13 @@ import("//brave/build/config.gni")
 import("//brave/build/ios/config.gni")
 import("//brave/build/ios/create_xcframework.gni")
 import("//brave/build/mac/tweak_info_plist.gni")
+import("//brave/components/ai_chat/core/common/buildflags/buildflags.gni")
 import("//brave/components/ai_chat/ios/browser/headers.gni")
+import("//brave/components/brave_rewards/core/buildflags/buildflags.gni")
 import("//brave/components/brave_shields/ios/browser/headers.gni")
 import("//brave/components/brave_talk/buildflags/buildflags.gni")
 import("//brave/components/brave_user_agent/ios/common/headers.gni")
+import("//brave/components/brave_wallet/common/buildflags/buildflags.gni")
 import("//brave/components/debounce/ios/browser/headers.gni")
 import("//brave/components/url_sanitizer/ios/browser/headers.gni")
 import("//brave/ios/browser/api/ads/headers.gni")
@@ -80,14 +83,10 @@ group("brave_ios") {
 
 brave_core_public_headers = [
   "//brave/base/apple/base_value_bridge.h",
-  "//brave/components/ai_chat/ios/browser/ai_chat_associated_content_page_fetcher.h",
-  "//brave/components/brave_wallet/ios/browser/wallet_page_handler_bridge.h",
+  "$root_gen_dir/brave/ios/app/brave_ios_public_buildflags.h",
   "//brave/ios/app/brave_core_main.h",
   "//brave/ios/app/brave_profile_controller.h",
   "//brave/ios/app/brave_core_switches.h",
-  "//brave/ios/browser/ai_chat/ai_chat_utils.h",
-  "//brave/ios/browser/ai_chat/ai_chat_settings_helper.h",
-  "//brave/ios/browser/ai_chat/ai_chat_ui_handler_bridge.h",
   "//brave/ios/browser/brave_account/brave_account_constants_bridge.h",
   "//brave/ios/browser/brave_account/brave_account_dialog_opener_bridge.h",
   "//brave/ios/browser/brave_account/brave_account_feature_bridge.h",
@@ -96,8 +95,6 @@ brave_core_public_headers = [
   "//brave/ios/browser/brave_origin/brave_origin_service_factory_bridge.h",
   "//brave/ios/browser/brave_news/brave_news_pref_names_bridge.h",
   "//brave/ios/browser/brave_vpn/brave_vpn_pref_names_bridge.h",
-  "//brave/ios/browser/brave_wallet/brave_wallet_factory_wrappers.h",
-  "//brave/ios/browser/brave_wallet/wallet_pref_names_bridge.h",
   "//brave/ios/browser/skus/skus_sdk_factory_wrappers.h",
   "//brave/ios/browser/playlist/playlist_exclusions_bridge.h",
   "//brave/ios/browser/playlist/playlist_exclusions_factory.h",
@@ -157,7 +154,14 @@ brave_core_public_headers = [
 ]
 
 brave_core_public_headers += ads_public_headers
-brave_core_public_headers += ai_chat_component_public_headers
+if (enable_ai_chat) {
+  brave_core_public_headers += ai_chat_component_public_headers + [
+                                 "//brave/components/ai_chat/ios/browser/ai_chat_associated_content_page_fetcher.h",
+                                 "//brave/ios/browser/ai_chat/ai_chat_utils.h",
+                                 "//brave/ios/browser/ai_chat/ai_chat_settings_helper.h",
+                                 "//brave/ios/browser/ai_chat/ai_chat_ui_handler_bridge.h",
+                               ]
+}
 brave_core_public_headers += brave_domains_public_headers
 brave_core_public_headers += brave_shields_public_headers
 brave_core_public_headers += brave_shields_api_public_headers
@@ -174,10 +178,18 @@ brave_core_public_headers +=
 brave_core_public_headers += browser_api_https_upgrades_public_headers
 brave_core_public_headers += browser_debounce_public_headers
 brave_core_public_headers += brave_stats_public_headers
-brave_core_public_headers += brave_wallet_public_headers
+if (enable_brave_wallet) {
+  brave_core_public_headers += brave_wallet_public_headers + [
+                                 "//brave/components/brave_wallet/ios/browser/wallet_page_handler_bridge.h",
+                                 "//brave/ios/browser/brave_wallet/brave_wallet_factory_wrappers.h",
+                                 "//brave/ios/browser/brave_wallet/wallet_pref_names_bridge.h",
+                               ]
+}
 brave_core_public_headers += browser_api_certificate_public_headers
 brave_core_public_headers += browser_api_favicon_public_headers
-brave_core_public_headers += rewards_public_headers
+if (enable_brave_rewards) {
+  brave_core_public_headers += rewards_public_headers
+}
 brave_core_public_headers += browser_api_omnibox_public_headers
 brave_core_public_headers += browser_api_opentabs_public_headers
 brave_core_public_headers += browser_api_qr_code_public_headers
@@ -260,10 +272,16 @@ ios_framework_bundle("brave_core_ios_framework") {
   ]
 
   deps += ads_public_deps
-  deps += ai_chat_component_public_deps
-  deps += brave_wallet_public_deps
+  if (enable_ai_chat) {
+    deps += ai_chat_component_public_deps
+  }
+  if (enable_brave_wallet) {
+    deps += brave_wallet_public_deps
+  }
   deps += brave_shields_component_public_deps
-  deps += rewards_public_deps
+  if (enable_brave_rewards) {
+    deps += rewards_public_deps
+  }
   deps += skus_public_deps
   deps += credential_provider_public_deps
   deps += webcompat_reporter_public_deps

@@ -3,7 +3,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import AIChat
 import BraveCore
 import BraveUI
 import Foundation
@@ -78,6 +77,9 @@ class SearchSuggestionDataSource {
   }
 
   var braveSearchPromotionAvailable: Bool {
+    #if BRAVE_IOS_SLIM
+    return false
+    #else
     guard Preferences.Review.launchCount.value > 1,
       defaultEngine?.shortName != OpenSearchEngine.EngineNames.brave,
       let braveSearchPromotionLaunchDate = Preferences.BraveSearch.braveSearchPromotionLaunchDate
@@ -105,6 +107,7 @@ class SearchSuggestionDataSource {
     }
 
     return true
+    #endif
   }
 
   // MARK: - Initialization

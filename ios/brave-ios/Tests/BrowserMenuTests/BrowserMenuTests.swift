@@ -3,7 +3,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import Combine
 import Foundation
 import Preferences
 import XCTest
@@ -295,42 +294,5 @@ class BrowserMenuTests: XCTestCase {
 
     model.reorderVisibleAction(actions[3], to: 1)
     XCTAssertEqual(model.visibleActions, Array(actions[0..<3]))
-  }
-
-  @MainActor func testVPNRegionPublishing() async throws {
-    let vpnStatusPublisher = PassthroughSubject<VPNStatus, Never>()
-    let model = BrowserMenuModel(
-      actions: [],
-      vpnStatusPublisher: vpnStatusPublisher.eraseToAnyPublisher(),
-      actionVisibility: actionVisibility,
-      actionRanks: actionRanks
-    )
-    XCTAssertEqual(model.vpnStatus, .disconnected)
-    let e = expectation(description: "VPN Status Publisher")
-    Task {
-      for await _ in model.$vpnStatus.values {
-        break
-      }
-      e.fulfill()
-    }
-    vpnStatusPublisher.send(
-      .connected(
-        activeRegion: .init(
-          countryCode: "CA",
-          displayName: "ca-east",
-          smartProxySupported: false
-        ),
-        isSmartProxyRoutingEnabled: false
-      )
-    )
-    await fulfillment(of: [e], timeout: 1)
-    switch model.vpnStatus {
-    case .connected(let region, let isSmartProxyEnabled):
-      XCTAssertEqual(region.flag, "🇨🇦")
-      XCTAssertEqual(region.displayName, "ca-east")
-      XCTAssertFalse(isSmartProxyEnabled)
-    case .disconnected:
-      XCTFail("VPN Region is wrong")
-    }
   }
 }

@@ -24,6 +24,9 @@ class NewTabPageNotifications {
     isShowingBackgroundImage: Bool,
     isShowingSponseredImage: Bool
   ) -> NotificationType? {
+    #if BRAVE_IOS_SLIM
+    return nil
+    #else
     if !isShowingBackgroundImage {
       return nil
     }
@@ -34,5 +37,6 @@ class NewTabPageNotifications {
       isSponsoredImage: isShowingSponseredImage
     )
     return .brandedImages(state: state)
+    #endif
   }
 }

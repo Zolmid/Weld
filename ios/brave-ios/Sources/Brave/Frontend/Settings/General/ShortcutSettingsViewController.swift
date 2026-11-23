@@ -28,16 +28,12 @@ struct ShortcutSettingsView: View {
   @State private var isOpenSettingsAlertPresented: Bool = false
 
   var isPlaylistAvailable: Bool
-  var isBraveVPNAvailable: Bool
   var isBraveNewsAvailable: Bool
 
   private var activityTypes: [ActivityType] {
     var types = OrderedSet(ActivityType.allCases)
     if !isPlaylistAvailable {
       types.remove(.openPlayList)
-    }
-    if !isBraveVPNAvailable {
-      types.remove(.enableBraveVPN)
     }
     if !isBraveNewsAvailable {
       types.remove(.openBraveNews)
@@ -117,13 +113,11 @@ struct ShortcutSettingsView: View {
 class ShortcutSettingsViewController: UIHostingController<ShortcutSettingsView> {
   init(
     isPlaylistAvailable: Bool,
-    isBraveVPNAvailable: Bool,
     isBraveNewsAvailable: Bool,
   ) {
     super.init(
       rootView: ShortcutSettingsView(
         isPlaylistAvailable: isPlaylistAvailable,
-        isBraveVPNAvailable: isBraveVPNAvailable,
         isBraveNewsAvailable: isBraveNewsAvailable
       )
     )
@@ -153,8 +147,6 @@ extension ActivityType {
       return Strings.Shortcuts.shortcutSettingsOpenHistoryListTitle
     case .clearBrowsingHistory:
       return Strings.Shortcuts.shortcutSettingsClearBrowserHistoryTitle
-    case .enableBraveVPN:
-      return Strings.Shortcuts.shortcutSettingsEnableVPNTitle
     case .openBraveNews:
       return Strings.Shortcuts.shortcutSettingsOpenBraveNewsTitle
     case .openPlayList:
@@ -176,8 +168,6 @@ extension ActivityType {
       return Strings.Shortcuts.shortcutSettingsOpenHistoryListDescription
     case .clearBrowsingHistory:
       return Strings.Shortcuts.shortcutSettingsClearBrowserHistoryDescription
-    case .enableBraveVPN:
-      return Strings.Shortcuts.shortcutSettingsEnableVPNDescription
     case .openBraveNews:
       return Strings.Shortcuts.shortcutSettingsOpenBraveNewsDescription
     case .openPlayList:

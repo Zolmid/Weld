@@ -8,6 +8,7 @@
 
 #include <memory>
 
+#include "brave/components/ai_chat/core/common/buildflags/buildflags.h"
 #include "brave/components/brave_wallet/common/buildflags/buildflags.h"
 #include "brave/components/playlist/core/common/buildflags/buildflags.h"
 #include "chrome/browser/android/tab_features.h"
@@ -86,8 +87,10 @@ class BraveTabFeatures : public TabFeatures_Chromium {
   // Enters fullscreen and Picture-in-Picture for YouTube videos.
   std::unique_ptr<ContentsObservingTabFeature> youtube_script_injector_;
 
+#if BUILDFLAG(ENABLE_AI_CHAT)
   std::unique_ptr<ai_chat::TabDataWebContentsObserver> tab_data_observer_;
   std::unique_ptr<ai_chat::WebMcpInjector> web_mcp_injector_;
+#endif
 
   // The main controller which takes care of stripping metadata from images
   // for the upload flow.

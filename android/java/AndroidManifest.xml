@@ -2,9 +2,11 @@
     android:exported="false">
 </receiver>
 
+{% if brave_enable_vpn == "true" %}
 <receiver android:name="org.chromium.chrome.browser.vpn.timer.TimerVpnActionReceiver"
     android:exported="false">
 </receiver>
+{% endif %}
 
 <activity
     android:name="org.chromium.chrome.browser.customtabs.BraveAccountCustomTabActivity"
@@ -22,17 +24,20 @@
 <receiver android:name="org.chromium.chrome.browser.notifications.BraveOnboardingNotification"
     android:exported="false">
 </receiver>
+{% if brave_enable_vpn == "true" %}
 <receiver android:name="org.chromium.chrome.browser.vpn.DisconnectVpnBroadcastReceiver"
     android:exported="false">
     <intent-filter>
         <action android:name="disconnect_vpn" />
     </intent-filter>
 </receiver>
+{% endif %}
 
 <activity
     android:name="org.chromium.chrome.browser.firstrun.WelcomeOnboardingActivity"
     android:theme="@style/Theme.Brave.WelcomeOnboarding"/>
 
+{% if brave_enable_wallet == "true" %}
 <activity android:name="org.chromium.chrome.browser.crypto_wallet.activities.BraveWalletActivity"
     android:theme="@style/Theme.Chromium.Activity" />
 
@@ -50,7 +55,9 @@
 
 <activity android:name="org.chromium.chrome.browser.crypto_wallet.activities.BraveWalletDAppsActivity"
     android:theme="@style/Theme.Chromium.Activity.FakeTranslucent" />
+{% endif %}
 
+{% if brave_enable_vpn == "true" %}
 <activity
     android:name="org.chromium.chrome.browser.vpn.split_tunnel.SplitTunnelActivity"
     android:theme="@style/Theme.Chromium.Activity"/>
@@ -91,6 +98,7 @@
 <activity
     android:name="org.chromium.chrome.browser.vpn.activities.BraveVpnSupportActivity"
     android:theme="@style/Theme.Chromium.Activity"/>
+{% endif %}
 
 <activity
     android:name="org.chromium.chrome.browser.playlist.PlaylistHostActivity"
@@ -111,11 +119,13 @@
     android:windowSoftInputMode="stateAlwaysHidden|adjustResize"
     android:configChanges="orientation|keyboardHidden|keyboard|screenSize|mcc|mnc|screenLayout|smallestScreenSize"/>
 
+{% if brave_enable_ai_chat == "true" %}
 <activity
     android:name="org.chromium.chrome.browser.brave_leo.BraveLeoPlansActivity"
     android:theme="@style/Theme.Chromium.Activity"
     android:noHistory="true"
     android:launchMode="singleTask"/>
+{% endif %}
 
 <activity
     android:name="org.chromium.chrome.browser.brave_origin.BraveOriginPlansActivity"
@@ -144,17 +154,20 @@
     </intent-filter>
 </service>
 
+{% if brave_enable_vpn == "true" %}
 <service
     android:name="org.chromium.chrome.browser.vpn.wireguard.WireguardService"
     android:foregroundServiceType="dataSync"
     android:exported="false">
 </service>
+{% endif %}
 
 <service
     android:name="org.chromium.chrome.browser.playlist.hls_content.HlsService"
     android:exported="false">
 </service>
 
+{% if brave_enable_vpn == "true" %}
 <service
     android:name="com.wireguard.android.backend.GoBackend$VpnService"
     android:permission="android.permission.BIND_VPN_SERVICE"
@@ -163,6 +176,7 @@
         <action android:name="android.net.VpnService" />
     </intent-filter>
 </service>
+{% endif %}
 
 <activity
     android:name="com.brave.playlist.activity.PlaylistMenuOnboardingActivity"

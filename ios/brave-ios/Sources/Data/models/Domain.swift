@@ -57,6 +57,7 @@ public final class Domain: NSManagedObject, CRUD {
     return URLComponents(string: url ?? "")
   }
 
+#if !BRAVE_IOS_SLIM
   private static let containsEthereumPermissionsPredicate = NSPredicate(
     format: "wallet_permittedAccounts != nil && wallet_permittedAccounts != ''"
   )
@@ -66,6 +67,8 @@ public final class Domain: NSManagedObject, CRUD {
   private static let containsCardanoPermissionsPredicate = NSPredicate(
     format: "wallet_cardanoPermittedAccounts != nil && wallet_cardanoPermittedAccounts != ''"
   )
+
+#endif
 
   /// A domain can be created in many places,
   /// different save strategies are used depending on its relationship(eg. attached to a Bookmark) or browsing mode.
@@ -243,6 +246,7 @@ public final class Domain: NSManagedObject, CRUD {
     return domains.filter({ $0.shield_fpProtection?.boolValue == true }).count
   }
 
+#if !BRAVE_IOS_SLIM
   // MARK: Wallet
 
   public class func setWalletPermissions(
@@ -364,6 +368,8 @@ public final class Domain: NSManagedObject, CRUD {
       }
     }
   }
+#endif
+
 }
 
 // MARK: - Internal implementations
@@ -450,6 +456,7 @@ extension Domain {
     return Domain.getOrCreateInternal(url, context: context, saveStrategy: .delayedPersistentStore)
   }
 
+#if !BRAVE_IOS_SLIM
   // MARK: Wallet
 
   class func setWalletPermissions(
@@ -550,6 +557,8 @@ extension Domain {
       }
     }
   }
+
+#endif
 
   @MainActor public class func allDomainsWithExlicitShieldSettings() -> [Domain] {
     let predicate = NSCompoundPredicate(orPredicateWithSubpredicates: [

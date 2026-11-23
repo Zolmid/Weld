@@ -95,8 +95,11 @@ export function useViewTypeTransition(currentViewType: ViewType | undefined) : V
 
     return {
       [ViewType.DefaultBrowser]: {  // The initial state view
-        forward: !browserProfiles || browserProfiles.length === 0 ?
-            ViewType.ImportSelectTheme : ViewType.ImportSelectBrowser
+        forward: !loadTimeData.getBoolean('promotionsEnabled')
+          ? ViewType.HelpImprove
+          : !browserProfiles || browserProfiles.length === 0
+            ? ViewType.ImportSelectTheme
+            : ViewType.ImportSelectBrowser
       },
       [ViewType.ImportSelectTheme]: {
         forward: nextAfterImport

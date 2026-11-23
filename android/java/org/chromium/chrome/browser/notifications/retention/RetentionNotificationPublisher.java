@@ -34,6 +34,7 @@ public class RetentionNotificationPublisher extends BroadcastReceiver {
             String action = intent.getAction();
             String notificationType =
                     intent.getStringExtra(RetentionNotificationUtil.NOTIFICATION_TYPE);
+            if (!RetentionNotificationUtil.areEnabled()) return;
             BraveActivity braveActivity = BraveActivity.getBraveActivity();
             if (action != null && action.equals(RETENTION_NOTIFICATION_ACTION)) {
                 if (braveActivity != null) {
@@ -187,6 +188,7 @@ public class RetentionNotificationPublisher extends BroadcastReceiver {
 
     public static void backgroundNotificationAction(Context context, Intent intent) {
         String notificationType = intent.getStringExtra(RetentionNotificationUtil.NOTIFICATION_TYPE);
+        if (!RetentionNotificationUtil.areEnabled()) return;
         if (ApplicationStatus.hasVisibleActivities() || context == null
                 || context.getPackageManager() == null) {
             return;

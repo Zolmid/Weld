@@ -142,6 +142,7 @@ extension BrowserViewController: PlaylistTabHelperDelegate {
   }
 
   func showPlaylistOnboarding(tab: (any TabState)?) {
+    #if !BRAVE_IOS_SLIM
     // Do NOT show the playlist onboarding popup if the tab isn't visible
 
     guard Preferences.Playlist.enablePlaylistURLBarButton.value,
@@ -197,6 +198,7 @@ extension BrowserViewController: PlaylistTabHelperDelegate {
         shouldShowPlaylistOnboardingThisSession = false
       }
     }
+    #endif
   }
 
   func openPlaylist(tab: (any TabState)?, item: PlaylistInfo?) {

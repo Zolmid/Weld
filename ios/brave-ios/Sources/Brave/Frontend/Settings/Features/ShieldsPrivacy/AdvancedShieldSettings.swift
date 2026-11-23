@@ -168,7 +168,9 @@ import os
 
   @Published var isSponsoredAdsEnabled: Bool {
     didSet {
+      #if !BRAVE_IOS_SLIM
       prefs.set(isSponsoredAdsEnabled, forPath: kBraveAdsSponsoredEnabledPrefName)
+      #endif
     }
   }
 
@@ -177,7 +179,11 @@ import os
   /// `AdsServiceImplIOS` logic when it is not started if Rewards is not
   /// supported.
   var isSponsoredAdsSupported: Bool {
+    #if BRAVE_IOS_SLIM
+    false
+    #else
     BraveRewardsAPI.isSupported(prefs)
+    #endif
   }
 
   /// If we should write Shields setting changes to content settings.
@@ -266,9 +272,13 @@ import os
     self.isDebounceEnabled = debounceService?.isEnabled ?? false
     self.shredHistoryItems = Preferences.Shields.shredHistoryItems.value
     self.webcompatReporterHandler = webcompatReporterHandler
+    #if BRAVE_IOS_SLIM
+    self.isSponsoredAdsEnabled = false
+    #else
     self.isSponsoredAdsEnabled = prefs.boolean(
       forPath: kBraveAdsSponsoredEnabledPrefName
     )
+    #endif
 
     blockMobileAnnoyances = FilterListStorage.shared.isEnabled(
       for: AdblockFilterListCatalogEntry.mobileAnnoyancesComponentID
@@ -313,6 +323,7 @@ import os
       )
     }
 
+    #if !BRAVE_IOS_SLIM
     // Enable clearing of Brave Ads data only if:
     // - Brave Ads is running
     // - Brave Rewards is disabled
@@ -325,6 +336,7 @@ import os
         )
       )
     }
+    #endif
 
     clearableSettings.append(contentsOf: [
       ClearableSetting(id: .recentSearches, clearable: RecentSearchClearable(), isEnabled: true),

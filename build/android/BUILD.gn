@@ -6,12 +6,42 @@
 import("//brave/build/config.gni")
 import("//brave/components/brave_wallet/common/buildflags/buildflags.gni")
 import("//build/config/android/rules.gni")
+import("//mojo/public/tools/bindings/mojom.gni")
 import("//third_party/jni_zero/jni_zero.gni")
 import("//tools/grit/grit_rule.gni")
 
 _apksigner = "$android_sdk_build_tools/apksigner"
 _jarsigner = "//third_party/jdk/current/bin/jarsigner"
 _zipalign = "$android_sdk_build_tools/zipalign"
+
+if (!enable_brave_wallet) {
+  # The Android sources share Wallet protocol types in all variants.
+  mojom("wallet_java_types") {
+    generate_cpp = false
+    generate_java = true
+    sources = [
+      "//brave/components/brave_wallet/common/brave_wallet.mojom",
+      "//brave/components/brave_wallet/common/ledger_bridge.mojom",
+      "//brave/components/brave_wallet/common/meld_integration.mojom",
+      "//brave/components/brave_wallet/common/mojom/brave_wallet_common.mojom",
+    ]
+    public_deps = [
+      "//mojo/public/mojom/base",
+      "//url/mojom:url_mojom_gurl",
+      "//url/mojom:url_mojom_origin",
+    ]
+  }
+}
+
+if (brave_disabled_feature_jni_sources != []) {
+  action("disabled_feature_jni_srcjar") {
+    script = "generate_disabled_jni.py"
+    inputs = brave_disabled_feature_jni_sources
+    outputs = [ "$target_gen_dir/$target_name.srcjar" ]
+    args = [ rebase_path(outputs[0], root_build_dir) ] +
+           rebase_path(inputs, root_build_dir)
+  }
+}
 
 action("sign_app_convert_aab_to_apk") {
   script = "//brave/build/android/aab_to_apk.py"

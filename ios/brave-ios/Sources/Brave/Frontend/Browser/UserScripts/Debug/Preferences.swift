@@ -56,6 +56,7 @@ extension Preferences {
         default: true
       )
 
+    #if !BRAVE_IOS_SLIM
     public static let ethereumProvider =
       Option<Bool>(
         key: "userscript.preferences.\(UserScriptManager.ScriptType.ethereumProvider.rawValue)",
@@ -73,6 +74,7 @@ extension Preferences {
         key: "userscript.preferences.\(UserScriptManager.ScriptType.cardanoProvider.rawValue)",
         default: true
       )
+    #endif
 
     public static let youtubeQuality =
       Option<Bool>(
@@ -80,11 +82,13 @@ extension Preferences {
         default: true
       )
 
+    #if !BRAVE_IOS_SLIM
     public static let leo =
       Option<Bool>(
         key: "userscript.preferences.\(UserScriptManager.ScriptType.braveLeoAIChat.rawValue)",
         default: true
       )
+    #endif
 
     public static let translate =
       Option<Bool>(

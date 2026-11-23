@@ -20,6 +20,7 @@ import androidx.annotation.VisibleForTesting;
 import com.google.android.apps.chrome.appwidget.bookmarks.BookmarkThumbnailWidgetProvider;
 
 import org.chromium.base.ContextUtils;
+import org.chromium.chrome.browser.BraveConfig;
 import org.chromium.chrome.browser.preferences.ChromeSharedPreferences;
 import org.chromium.chrome.browser.quickactionsearchwidget.QuickActionSearchWidgetProvider.QuickActionSearchWidgetProviderDino;
 import org.chromium.chrome.browser.quickactionsearchwidget.QuickActionSearchWidgetProvider.QuickActionSearchWidgetProviderSearch;
@@ -31,6 +32,8 @@ public class BraveSearchWidgetUtils {
             "org.chromium.chrome.browser.widget.quickactionsearchandbookmark.utils.SHOW_WIDGET";
 
     public static boolean getShouldShowWidgetPromo(Context context) {
+        if (!BraveConfig.ENABLE_PROMOTIONS) return false;
+
         AppWidgetManager manager = AppWidgetManager.getInstance(context);
         boolean hasQuickActionSearchBookmarkWidget =
                 manager.getAppWidgetIds(new ComponentName(context,

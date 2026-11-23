@@ -6,7 +6,6 @@
 import BraveCore
 import BraveShields
 import BraveUI
-import BraveVPN
 import Onboarding
 import Preferences
 import Shared
@@ -26,8 +25,8 @@ extension BrowserViewController {
 
   func showNTPOnboarding() {
     Preferences.AppState.shouldDeferPromotedPurchase.value = false
-    iapObserver.savedPromotedProduct = nil
 
+    #if !BRAVE_IOS_SLIM
     if !isSearchContainerVisible,
       tabManager.selectedTab?.visibleURL?.displayURL == nil,
       Preferences.DebugFlag.skipNTPCallouts != true
@@ -37,15 +36,7 @@ extension BrowserViewController {
         showPrivacyReportsOnboardingIfNeeded()
       }
     }
-  }
-
-  private func triggerPromotedInAppPurchase(product: Product?) {
-    guard let product else {
-      return
-    }
-
-    navigationHelper.openVPNBuyScreen(iapObserver: iapObserver)
-    BraveVPN.activatePaymentTypeForStoredPromotion(product: product)
+    #endif
   }
 
   private func showPrivacyReportsOnboardingIfNeeded() {
@@ -228,7 +219,11 @@ extension BrowserViewController {
     // Check if user is already default before showing onboarding
     let isDefault = defaultBrowserHelper.status == .defaulted
 
+    #if BRAVE_IOS_SLIM
+    var steps: [any OnboardingStep] = []
+    #else
     var steps: [any OnboardingStep] = [.addToDock, .blockInterruptions]
+    #endif
     if !isDefault {
       steps.insert(.defaultBrowsing, at: 0)
     }
@@ -237,6 +232,15 @@ extension BrowserViewController {
     {
       steps.append(.metricsOptIn)
     }
+
+    #if BRAVE_IOS_SLIM
+    if steps.isEmpty {
+      Preferences.Onboarding.basicOnboardingCompleted.value = OnboardingState.completed.rawValue
+      Preferences.AppState.shouldDeferPromotedPurchase.value = false
+      Preferences.FocusOnboarding.focusOnboardingFinished.value = true
+      return
+    }
+    #endif
 
     let controller = OnboardingController(
       environment: .init(
@@ -254,6 +258,8 @@ extension BrowserViewController {
 
     present(controller, animated: false)
 
+    #if !BRAVE_IOS_SLIM
     Preferences.FocusOnboarding.urlBarIndicatorShowBeShown.value = true
+    #endif
   }
 }

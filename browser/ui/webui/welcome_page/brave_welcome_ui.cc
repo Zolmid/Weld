@@ -19,6 +19,7 @@
 #include "brave/browser/ui/webui/settings/brave_import_bulk_data_handler.h"
 #include "brave/browser/ui/webui/settings/brave_search_engines_handler.h"
 #include "brave/browser/ui/webui/welcome_page/welcome_dom_handler.h"
+#include "brave/build/promotion_buildflags.h"
 #include "brave/components/brave_welcome/common/features.h"
 #include "brave/components/brave_welcome/resources/grit/brave_welcome_generated_map.h"
 #include "brave/components/constants/pref_names.h"
@@ -94,6 +95,7 @@ constexpr webui::LocalizedString kLocalizedStrings[] = {
     {"braveWelcomeHelpWDPAccept", IDS_BRAVE_WELCOME_HELP_WDP_ACCEPT},
     {"braveWelcomeHelpWDPReject", IDS_BRAVE_WELCOME_HELP_WDP_REJECT}};
 
+#if BUILDFLAG(ENABLE_BRAVE_PROMOTIONS)
 void OpenJapanWelcomePage(Profile* profile) {
   auto* browser =
       ProfileBrowserCollection::GetForProfile(profile)->FindTabbedBrowser();
@@ -105,6 +107,7 @@ void OpenJapanWelcomePage(Profile* profile) {
     browser->OpenURL(open_params, /*navigation_handle_callback=*/{});
   }
 }
+#endif  // BUILDFLAG(ENABLE_BRAVE_PROMOTIONS)
 
 }  // namespace
 
@@ -144,6 +147,7 @@ BraveWelcomeUI::BraveWelcomeUI(content::WebUI* web_ui, std::string_view name)
   country_codes::CountryId country_id =
       country_codes::CountryId::Deserialize(profile->GetPrefs()->GetInteger(
           regional_capabilities::prefs::kCountryIDAtInstall));
+#if BUILDFLAG(ENABLE_BRAVE_PROMOTIONS)
   const bool is_jpn = country_id == country_codes::CountryId("JP");
   if (!profile->GetPrefs()->GetBoolean(
           brave_welcome_page::prefs::kHasSeenBraveWelcomePage)) {
@@ -153,6 +157,7 @@ BraveWelcomeUI::BraveWelcomeUI(content::WebUI* web_ui, std::string_view name)
           base::Seconds(3));
     }
   }
+#endif  // BUILDFLAG(ENABLE_BRAVE_PROMOTIONS)
 
   for (const auto& str : kLocalizedStrings) {
     std::u16string l10n_str = l10n_util::GetStringUTF16(str.id);
@@ -160,6 +165,7 @@ BraveWelcomeUI::BraveWelcomeUI(content::WebUI* web_ui, std::string_view name)
   }
 
   // Variables considered when determining which onboarding cards to show
+  source->AddBoolean("promotionsEnabled", BUILDFLAG(ENABLE_BRAVE_PROMOTIONS));
   source->AddString("countryString", country_id.CountryCode());
   source->AddBoolean(
       "showRewardsCard",

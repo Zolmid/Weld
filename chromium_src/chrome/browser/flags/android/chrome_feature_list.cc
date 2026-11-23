@@ -6,7 +6,7 @@
 #include "brave/browser/android/safe_browsing/features.h"
 #include "brave/browser/android/youtube_script_injector/features.h"
 #include "brave/browser/brave_browser_features.h"
-#include "brave/components/ai_chat/core/common/features.h"
+#include "brave/components/ai_chat/core/common/buildflags/buildflags.h"
 #include "brave/components/brave_ads/buildflags/buildflags.h"
 #include "brave/components/brave_news/common/features.h"
 #include "brave/components/brave_origin/features.h"
@@ -41,10 +41,16 @@
 #include "brave/components/email_aliases/features.h"
 #endif
 
+#if BUILDFLAG(ENABLE_AI_CHAT)
+#include "brave/components/ai_chat/core/common/features.h"
 // CHROMIUM_SRC_INTERNAL_USE
-#define BRAVE_AI_CHAT_FLAGS                                        \
+#define BRAVE_AI_CHAT_FLAGS                                     \
   &ai_chat::features::kAIChat, &ai_chat::features::kAIChatHistory, \
       &ai_chat::features::kBraveSyncAIChat,
+#else
+// CHROMIUM_SRC_INTERNAL_USE
+#define BRAVE_AI_CHAT_FLAGS
+#endif
 
 #if BUILDFLAG(ENABLE_BRAVE_ADS)
 // CHROMIUM_SRC_INTERNAL_USE

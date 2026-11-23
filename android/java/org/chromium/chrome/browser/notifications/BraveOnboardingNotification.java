@@ -17,6 +17,7 @@ import android.net.Uri;
 import org.chromium.base.ContextUtils;
 import org.chromium.base.Log;
 import org.chromium.chrome.R;
+import org.chromium.chrome.browser.BraveConfig;
 import org.chromium.chrome.browser.app.BraveActivity;
 import org.chromium.chrome.browser.notifications.retention.RetentionNotificationPublisher;
 import org.chromium.chrome.browser.notifications.retention.RetentionNotificationUtil;
@@ -42,6 +43,7 @@ public class BraveOnboardingNotification extends BroadcastReceiver {
     private static final String COUNTRY_CODE_FR = "fr_FR";
 
     public static void showOnboardingNotification() {
+        if (!BraveConfig.ENABLE_PROMOTIONS) return;
         Context context = ContextUtils.getApplicationContext();
         if (context == null) return;
         NotificationManagerProxyImpl notificationManager = new NotificationManagerProxyImpl();
@@ -74,6 +76,7 @@ public class BraveOnboardingNotification extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        if (!BraveConfig.ENABLE_PROMOTIONS) return;
         String action = intent.getAction();
         try {
             BraveActivity braveActivity = BraveActivity.getBraveActivity();

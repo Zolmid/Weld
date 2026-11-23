@@ -1,44 +1,41 @@
 diff --git a/chrome/android/chrome_public_apk_tmpl.gni b/chrome/android/chrome_public_apk_tmpl.gni
-index a6828d39a1022134b6ac9851b06e16da814fa7b5..564cfd21a26f837792b4f8853bff58984f7d4fc4 100644
 --- a/chrome/android/chrome_public_apk_tmpl.gni
 +++ b/chrome/android/chrome_public_apk_tmpl.gni
-@@ -153,7 +153,7 @@ template("chrome_common_apk_or_module_tmpl") {
-   # both 64-bit and 32-bit ABIs. The 32-bit ABI remains the primary one via
-   # use32bitAbi="true".
+@@ -7,2 +7,5 @@
+ import("//base/android/resource_exclusions.gni")
++import("//brave/components/ai_chat/core/common/buildflags/buildflags.gni")
++import("//brave/components/brave_vpn/common/buildflags/buildflags.gni")
++import("//brave/components/brave_wallet/common/buildflags/buildflags.gni")
+ import("//build/config/android/rules.gni")
+@@ -39,2 +42,5 @@
+ default_chrome_public_jinja_variables = [
++  "brave_enable_ai_chat=$enable_ai_chat",
++  "brave_enable_vpn=$enable_brave_vpn",
++  "brave_enable_wallet=$enable_brave_wallet",
+   "channel=$android_channel",
+@@ -155,3 +161,3 @@
    _is_32_bit_multiarch_browser =
 -      !_is_trichrome && !_is_test && !_is_64_bit_browser &&
 +      is_chrome_branded && !_is_trichrome && !_is_test && !_is_64_bit_browser &&
        (android_64bit_target_cpu || defined(android_app_64bit_placeholder_abi))
- 
-   if (_is_trichrome) {
-@@ -310,6 +310,7 @@ template("chrome_common_apk_or_module_tmpl") {
- 
-     resource_exclusion_regex = common_resource_exclusion_regex
+@@ -312,2 +318,3 @@
      resource_exclusion_exceptions = common_resource_exclusion_exceptions
 +    resource_exclusion_exceptions += brave_resources_exclusion_exceptions
  
-     # Exceptions (rationale in https://crbug.com/41301595):
-     resource_exclusion_exceptions += [
-@@ -348,6 +349,7 @@ template("chrome_common_apk_or_module_tmpl") {
-       if (!_is_bundle && optimize_android_resources) {
-         resources_config_paths = [ "//chrome/android/aapt2.config" ]
+@@ -350,2 +357,3 @@
        }
 +      proguard_configs += [ "//brave/android/java/proguard.flags" ]
      }
- 
-     # Java and native targets form two independent compile graphs. Deps from
-@@ -712,6 +714,14 @@ template("chrome_common_apk_or_module_tmpl") {
-                                  "version_code",
-                                  "version_name",
+@@ -714,2 +722,12 @@
                                 ])
-+    _wireguard_target =
-+        "//brave/third_party/android_deps:com_wireguard_android_J__unpack_aar"
-+    deps += [ _wireguard_target ]
-+    _libwireguard_dir =
-+        get_label_info(
-+            "//brave/third_party/android_deps:com_wireguard_android($default_toolchain)",
-+            "target_out_dir") + "/com_wireguard_android_java/jni"
-+    loadable_modules += [ "$_libwireguard_dir/$android_app_abi/libwg-go.so" ]
++    if (enable_brave_vpn) {
++      _wireguard_target =
++          "//brave/third_party/android_deps:com_wireguard_android_J__unpack_aar"
++      deps += [ _wireguard_target ]
++      _libwireguard_dir = get_label_info(
++                              "//brave/third_party/android_deps:com_wireguard_android($default_toolchain)",
++                              "target_out_dir") +
++                          "/com_wireguard_android_java/jni"
++      loadable_modules += [ "$_libwireguard_dir/$android_app_abi/libwg-go.so" ]
++    }
    }
- }
- 

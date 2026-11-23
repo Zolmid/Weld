@@ -9,15 +9,19 @@ import UIKit
 
 enum NTPWallpaper {
   case image(NTPBackgroundImage)
+  #if !BRAVE_IOS_SLIM
   case sponsoredMedia(NTPSponsoredImageBackground, BraveAds.NewTabPageAdInfo)
+  #endif
 
   var backgroundImage: UIImage? {
     let imagePath: URL
     switch self {
     case .image(let background):
       imagePath = background.imagePath
+    #if !BRAVE_IOS_SLIM
     case .sponsoredMedia(let background, _):
       imagePath = background.imagePath
+    #endif
     }
     return UIImage(contentsOfFile: imagePath.path)
   }
@@ -27,8 +31,10 @@ enum NTPWallpaper {
     switch self {
     case .image:
       imagePath = nil
+    #if !BRAVE_IOS_SLIM
     case .sponsoredMedia(let background, _):
       imagePath = background.logo.imagePath
+    #endif
     }
     return imagePath.flatMap { UIImage(contentsOfFile: $0.path) }
   }
@@ -37,8 +43,10 @@ enum NTPWallpaper {
     switch self {
     case .image:
       return nil  // Will eventually return a real value
+    #if !BRAVE_IOS_SLIM
     case .sponsoredMedia(let background, _):
       return background.focalPoint
+    #endif
     }
   }
 }
@@ -87,13 +95,18 @@ public class NTPDataSource {
   private var lastBackgroundChoices = [Int]()
 
   func shouldAttemptSponsoredMedia() -> Bool {
+    #if BRAVE_IOS_SLIM
+    return false
+    #else
     return
       prefs.boolean(forPath: kBraveAdsSponsoredEnabledPrefName)
       && Preferences.NewTabPage.backgroundRotationCounter.value
         == service.initialCountToNewTabTakeoverWallpaper
       && !privateBrowsingManager.isPrivateBrowsing
+    #endif
   }
 
+  #if !BRAVE_IOS_SLIM
   func getSponsoredMediaBackground(for newTabPageAd: BraveAds.NewTabPageAdInfo) -> NTPWallpaper? {
     guard let sponsoredImageData = service.sponsoredImageData
     else { return nil }
@@ -114,6 +127,7 @@ public class NTPDataSource {
 
     return nil
   }
+  #endif
 
   func getImageBackground() -> NTPWallpaper? {
     // Identifying the background array to use
@@ -160,6 +174,9 @@ public class NTPDataSource {
   func newBackground(completion: @escaping (NTPWallpaper?) -> Void) {
     if !Preferences.NewTabPage.backgroundImages.value { return completion(nil) }
 
+    #if BRAVE_IOS_SLIM
+    completion(getImageBackground())
+    #else
     // Force back to `0` if at end
     Preferences.NewTabPage.backgroundRotationCounter.value %= service.countToNewTabTakeoverWallpaper
     // Increment regardless, this is a counter, not an index, so smallest should be `1`
@@ -177,6 +194,7 @@ public class NTPDataSource {
     } else {
       completion(getImageBackground())
     }
+    #endif
   }
 }
 

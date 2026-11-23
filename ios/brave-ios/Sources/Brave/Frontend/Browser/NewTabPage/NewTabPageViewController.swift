@@ -258,10 +258,14 @@ class NewTabPageViewController: UIViewController {
       ),
     ]
 
+    #if BRAVE_IOS_SLIM
+    let isBackgroundNTPSI = false
+    #else
     var isBackgroundNTPSI = false
     if let ntpBackground = background.currentBackground, case .sponsoredMedia = ntpBackground {
       isBackgroundNTPSI = true
     }
+    #endif
     let ntpDefaultBrowserCalloutProvider = NTPDefaultBrowserCalloutProvider(
       isBackgroundNTPSI: isBackgroundNTPSI
     )
@@ -500,10 +504,12 @@ class NewTabPageViewController: UIViewController {
       switch background {
       case .image:
         hideNotification()
+      #if !BRAVE_IOS_SLIM
       case .sponsoredMedia:
         // Current background is still a sponsored image so it can stay
         // visible
         break
+      #endif
       }
     }
   }
@@ -521,8 +527,10 @@ class NewTabPageViewController: UIViewController {
         } else {
           backgroundButtonsView.activeButton = .none
         }
+      #if !BRAVE_IOS_SLIM
       case .sponsoredMedia(let background, _):
         backgroundButtonsView.activeButton = .brandLogo(background.logo)
+      #endif
       }
     } else {
       backgroundButtonsView.activeButton = .none
@@ -579,6 +587,7 @@ class NewTabPageViewController: UIViewController {
   // MARK: - Sponsored background events
 
   private func reportSponsoredBackgroundViewedEventIfNeeded() {
+    #if !BRAVE_IOS_SLIM
     // Only record a sponsored background viewed impression when the NTP
     // background is not covered by the URL bar overlay.
     if delegate?.isNewTabPageOccluded() == true {
@@ -597,8 +606,10 @@ class NewTabPageViewController: UIViewController {
 
     delegate?.showNewTabTakeoverInfoBarIfNeeded()
     reportSponsoredBackgroundEvent(.viewedImpression)
+    #endif
   }
 
+  #if !BRAVE_IOS_SLIM
   private func reportSponsoredBackgroundEvent(
     _ event: BraveAds.NewTabPageAdEventType,
     completion: ((_ success: Bool) -> Void)? = nil
@@ -617,6 +628,7 @@ class NewTabPageViewController: UIViewController {
       )
     }
   }
+  #endif
 
   // MARK: - Notifications
 
@@ -631,10 +643,14 @@ class NewTabPageViewController: UIViewController {
       return
     }
 
+    #if BRAVE_IOS_SLIM
+    let isShowingSponseredImage = false
+    #else
     var isShowingSponseredImage = false
     if case .sponsoredMedia = background.currentBackground {
       isShowingSponseredImage = true
     }
+    #endif
 
     guard
       let notification = notifications.notificationToShow(
@@ -724,10 +740,14 @@ class NewTabPageViewController: UIViewController {
       preventReloadOnBraveNewsEnabledChange = true
       Preferences.BraveNews.userOptedIn.value = true
       Preferences.BraveNews.isEnabled.value = true
+      #if BRAVE_IOS_SLIM
+      loadFeedContents()
+      #else
       rewards.ads.initialize { [weak self] _ in
         // Initialize ads if it hasn't already been done
         self?.loadFeedContents()
       }
+      #endif
     case .emptyCardTappedSourcesAndSettings:
       tappedBraveNewsSettings()
     case .errorCardTappedRefresh:
@@ -983,11 +1003,14 @@ class NewTabPageViewController: UIViewController {
     switch background {
     case .image:
       presentImageCredit(sender)
+    #if !BRAVE_IOS_SLIM
     case .sponsoredMedia(let background, _):
       tappedSponsorButton(background.logo)
+    #endif
     }
   }
 
+  #if !BRAVE_IOS_SLIM
   private func tappedSponsorButton(_ logo: NTPSponsoredImageLogo) {
     UIImpactFeedbackGenerator(style: .medium).vibrate()
     reportSponsoredBackgroundEvent(.clicked)
@@ -1019,6 +1042,7 @@ class NewTabPageViewController: UIViewController {
       }
     }
   }
+  #endif
 
   private func handleTopSiteAction(action: TopSiteAction) {
     delegate?.handleTopSiteAction(action: action)
@@ -1262,9 +1286,11 @@ extension NewTabPageViewController {
     newTabsStorage.add(value: 1, to: Date())
     let newTabsCreatedAnswer = newTabsStorage.maximumDaysCombinedValue
 
+    #if !BRAVE_IOS_SLIM
     if case .sponsoredMedia = background.currentBackground {
       sponsoredStorage.add(value: 1, to: Date())
     }
+    #endif
 
     UmaHistogramRecordValueToBucket(
       "Brave.NTP.NewTabsCreated.3",

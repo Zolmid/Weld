@@ -5,7 +5,7 @@
 
 // This file is included into //ios/chrome/browser/flags/about_flags.mm
 
-#include "brave/components/ai_chat/core/common/features.h"
+#include "brave/components/ai_chat/core/common/buildflags/buildflags.h"
 #include "brave/components/brave_ads/buildflags/buildflags.h"
 #include "brave/components/brave_component_updater/browser/features.h"
 #include "brave/components/brave_origin/features.h"
@@ -30,6 +30,10 @@
 #include "components/webui/flags/feature_entry_macros.h"
 #include "components/webui/flags/flags_state.h"
 #include "net/base/features.h"
+
+#if BUILDFLAG(ENABLE_AI_CHAT)
+#include "brave/components/ai_chat/core/common/features.h"
+#endif  // BUILDFLAG(ENABLE_AI_CHAT)
 
 #if BUILDFLAG(ENABLE_BRAVE_ADS)
 #include "brave/components/brave_ads/core/public/ads_internals/ads_internals_verbose_mode_feature.h"
@@ -127,6 +131,10 @@ const flags_ui::FeatureEntry::FeatureVariation
               brave_wallet::features::kBraveWalletCardanoFeature),            \
       })
 
+#else
+#define BRAVE_NATIVE_WALLET_FEATURE_ENTRIES
+#endif  // BUILDFLAG(ENABLE_BRAVE_WALLET)
+
 #define BRAVE_SHIELDS_FEATURE_ENTRIES                                          \
   EXPAND_FEATURE_ENTRIES(                                                      \
       {                                                                        \
@@ -220,6 +228,7 @@ const flags_ui::FeatureEntry::FeatureVariation
               brave_shields::features::kTransitionToUpstreamHttpsUpgrades),    \
       })
 
+#if BUILDFLAG(ENABLE_AI_CHAT)
 #define BRAVE_AI_CHAT_FEATURE_ENTRIES                                       \
   EXPAND_FEATURE_ENTRIES(                                                   \
       {                                                                     \
@@ -259,6 +268,11 @@ const flags_ui::FeatureEntry::FeatureVariation
           FEATURE_VALUE_TYPE(ai_chat::features::kAIChatUserChoiceTool),     \
       })
 
+#else
+#define BRAVE_AI_CHAT_FEATURE_ENTRIES
+#endif  // BUILDFLAG(ENABLE_AI_CHAT)
+
+#if BUILDFLAG(ENABLE_BRAVE_WALLET)
 #define BRAVE_WALLET_FEATURE_ENTRIES                                      \
   EXPAND_FEATURE_ENTRIES(                                                 \
       {                                                                   \
@@ -270,7 +284,6 @@ const flags_ui::FeatureEntry::FeatureVariation
               brave_wallet::features::kBraveWalletCardanoDAppSupportIOS), \
       })
 #else
-#define BRAVE_NATIVE_WALLET_FEATURE_ENTRIES
 #define BRAVE_WALLET_FEATURE_ENTRIES
 #endif
 

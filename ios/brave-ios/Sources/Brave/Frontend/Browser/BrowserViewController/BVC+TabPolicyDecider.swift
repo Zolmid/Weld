@@ -101,15 +101,6 @@ extension BrowserViewController: TabPolicyDecider {
       return .cancel
     }
 
-    // Universal links do not work if the request originates from the app, manual handling is required.
-    if let mainDocURL = request.mainDocumentURL,
-      let universalLink = UniversalLinkManager.universalLinkType(for: mainDocURL, checkPath: true),
-      universalLink == .buyVPN
-    {
-      presentCorrespondingVPNViewController()
-      return .cancel
-    }
-
     if #available(iOS 17.4, *), !ProcessInfo.processInfo.isiOSAppOnVisionOS {
       // Accessing `MarketplaceKitURIScheme` on Vision OS results in a crash
       if requestURL.scheme == MarketplaceKitURIScheme {
@@ -127,6 +118,7 @@ extension BrowserViewController: TabPolicyDecider {
       }
     }
 
+    #if !BRAVE_IOS_SLIM
     // handles Decentralized DNS
     if let decentralizedDNSHelper = self.decentralizedDNSHelperFor(url: requestURL),
       requestInfo.isMainFrame
@@ -153,6 +145,7 @@ extension BrowserViewController: TabPolicyDecider {
         break
       }
     }
+    #endif
 
     tab.currentRequestURL = requestURL
 

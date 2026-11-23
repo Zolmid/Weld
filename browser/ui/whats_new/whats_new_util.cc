@@ -18,6 +18,7 @@
 #include "base/strings/string_number_conversions.h"
 #include "base/version.h"
 #include "brave/browser/ui/whats_new/pref_names.h"
+#include "brave/build/promotion_buildflags.h"
 #include "brave/components/l10n/common/locale_util.h"
 #include "chrome/browser/profiles/chrome_version_service.h"
 #include "chrome/browser/profiles/profile_manager.h"
@@ -36,6 +37,7 @@ namespace {
 
 double g_testing_major_version = 0;
 
+#if BUILDFLAG(ENABLE_BRAVE_PROMOTIONS)
 // |version| has four components like 111.1.51.34.
 // First one is upstream's major version.
 // Brave's major version is second and third component like 1.51.
@@ -110,6 +112,7 @@ std::optional<double> GetTargetMajorVersion() {
 
   return target_major_version;
 }
+#endif  // BUILDFLAG(ENABLE_BRAVE_PROMOTIONS)
 
 }  // namespace
 
@@ -136,6 +139,9 @@ void SetCurrentVersionForTesting(double major_version) {
 }
 
 bool ShouldShowBraveWhatsNewForState(PrefService* local_state) {
+#if !BUILDFLAG(ENABLE_BRAVE_PROMOTIONS)
+  return false;
+#else
   if (!DoesUserGetMajorUpdateSinceInstall()) {
     VLOG(2) << __func__ << " : This user doesn't get major update yet.";
     return false;
@@ -185,6 +191,7 @@ bool ShouldShowBraveWhatsNewForState(PrefService* local_state) {
   // multiple profile relaunches (see https://crbug.com/1274313).
   local_state->SetDouble(prefs::kWhatsNewLastVersion, *target_major_version);
   return true;
+#endif
 }
 
 void RegisterLocalStatePrefs(PrefRegistrySimple* registry) {

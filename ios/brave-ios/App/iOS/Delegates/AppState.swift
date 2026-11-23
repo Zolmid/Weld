@@ -223,7 +223,9 @@ public class AppState {
       }
     }
 
+    #if !BRAVE_IOS_SLIM
     switches.append(.init(key: .rewardsFlags, value: BraveRewards.Configuration.current().flags))
+    #endif
 
     // Initialize BraveCore
     let braveCoreMain = BraveCoreMain(additionalSwitches: switches)
@@ -239,10 +241,13 @@ public class AppState {
     let responders: [(String, InternalSchemeResponse)] = [
       (LegacyNTPHandler.path, LegacyNTPHandler()),
       (ReaderModeHandler.path, ReaderModeHandler()),
-      (Web3DomainHandler.path, Web3DomainHandler()),
       (BlockedDomainHandler.path, BlockedDomainHandler()),
       (HTTPBlockedHandler.path, HTTPBlockedHandler()),
     ]
+
+    #if !BRAVE_IOS_SLIM
+    InternalSchemeHandler.responders[Web3DomainHandler.path] = Web3DomainHandler()
+    #endif
 
     responders.forEach { (path, responder) in
       InternalSchemeHandler.responders[path] = responder

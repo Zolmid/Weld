@@ -67,19 +67,23 @@ public class OnboardingStepAdapter
             final SpannableString wdpLearnMore,
             final String dayZeroVariant,
             final boolean skipMakeBraveBetter,
+            final boolean showPromotions,
             final PageBounceAnimator pageBounceAnimator,
             final OnboardingNavigationListener listener) {
         mWdpLearnMore = wdpLearnMore;
         mPageBounceAnimator = pageBounceAnimator;
         mListener = listener;
 
-        mSteps.add(R.layout.help_brave_search);
-        mSteps.add(R.layout.block_interruptions);
-        if (DAY_ZERO_VARIANT_Y.equals(dayZeroVariant)
-                || DAY_ZERO_VARIANT_Z.equals(dayZeroVariant)) {
-            mSteps.add(R.layout.customize_brave);
+        if (showPromotions) {
+            mSteps.add(R.layout.help_brave_search);
+            mSteps.add(R.layout.block_interruptions);
+            if (DAY_ZERO_VARIANT_Y.equals(dayZeroVariant)
+                    || DAY_ZERO_VARIANT_Z.equals(dayZeroVariant)) {
+                mSteps.add(R.layout.customize_brave);
+            }
         }
-        if (!skipMakeBraveBetter) {
+        // Keep a Start browsing action even if both privacy settings are managed.
+        if (!skipMakeBraveBetter || !showPromotions) {
             mSteps.add(R.layout.make_brave_better);
         }
     }

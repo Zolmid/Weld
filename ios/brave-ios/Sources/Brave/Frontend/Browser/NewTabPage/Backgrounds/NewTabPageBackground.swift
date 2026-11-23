@@ -52,9 +52,11 @@ class NewTabPageBackground: PreferencesObserver {
 
     Preferences.NewTabPage.backgroundImages.observe(from: self)
     Preferences.NewTabPage.selectedCustomTheme.observe(from: self)
+    #if !BRAVE_IOS_SLIM
     prefsChangeRegistrar.addObserver(forPath: kBraveAdsSponsoredEnabledPrefName) { [weak self] _ in
       self?.handlePreferencesChange()
     }
+    #endif
 
     recordSponsoredMediaTypeP3A()
   }
@@ -87,6 +89,7 @@ class NewTabPageBackground: PreferencesObserver {
   }
 
   private func recordSponsoredMediaTypeP3A() {
+    #if !BRAVE_IOS_SLIM
     // Question: What type of new tab page sponsored media is shown?
     enum Answer: Int, CaseIterable {
       case disabled = 0
@@ -101,5 +104,6 @@ class NewTabPageBackground: PreferencesObserver {
     }
 
     UmaHistogramEnumeration("Brave.NTP.SponsoredMediaType", sample: answer)
+    #endif
   }
 }

@@ -20,6 +20,7 @@
 #include "base/values.h"
 #include "brave/browser/ntp_background/view_counter_service_factory.h"
 #include "brave/browser/profiles/profile_util.h"
+#include "brave/build/promotion_buildflags.h"
 #include "brave/components/brave_ads/buildflags/buildflags.h"
 #include "brave/components/brave_ads/core/mojom/brave_ads.mojom.h"
 #include "brave/components/brave_news/common/buildflags/buildflags.h"
@@ -112,7 +113,9 @@ base::DictValue GetPreferencesDictionary(PrefService* prefs) {
   pref_data.Set("showStats", prefs->GetBoolean(kNewTabPageShowStats));
 #if BUILDFLAG(ENABLE_BRAVE_NEWS)
   pref_data.Set("showToday",
-                prefs->GetBoolean(brave_news::prefs::kNewTabPageShowToday));
+                prefs->GetBoolean(brave_news::prefs::kNewTabPageShowToday) &&
+                    (prefs->GetBoolean(brave_news::prefs::kBraveNewsOptedIn) ||
+                     BUILDFLAG(ENABLE_BRAVE_PROMOTIONS)));
 #endif  // BUILDFLAG(ENABLE_BRAVE_NEWS)
   pref_data.Set("showRewards", prefs->GetBoolean(kNewTabPageShowRewards));
   pref_data.Set("isBrandedWallpaperNotificationDismissed",
@@ -127,7 +130,8 @@ base::DictValue GetPreferencesDictionary(PrefService* prefs) {
   pref_data.Set("hideAllWidgets", prefs->GetBoolean(kNewTabPageHideAllWidgets));
 #if BUILDFLAG(ENABLE_BRAVE_TALK)
   pref_data.Set("showBraveTalk",
-                prefs->GetBoolean(brave_talk::prefs::kNewTabPageShowBraveTalk));
+                prefs->GetBoolean(brave_talk::prefs::kNewTabPageShowBraveTalk) &&
+                    BUILDFLAG(ENABLE_BRAVE_PROMOTIONS));
   pref_data.Set("isBraveTalkDisabledByPolicy",
                 prefs->GetBoolean(brave_talk::prefs::kDisabledByPolicy));
 #endif

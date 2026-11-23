@@ -12,10 +12,12 @@ import os.log
 
 extension BraveStoreProduct {
   /// The key to use when storing the receipt in WebKit's LocalStorage
-  var localStorageKey: String {
+  var localStorageKey: String? {
     switch self {
-    case .vpnMonthly, .vpnYearly: return "braveVpn.receipt"
+    #if !BRAVE_IOS_SLIM
+    case .vpnMonthly, .vpnYearly: return nil
     case .leoMonthly, .leoYearly: return "braveLeo.receipt"
+    #endif
     case .originPurchase: return "braveOrigin.receipt"
     }
   }
@@ -46,17 +48,13 @@ class BraveSkusAccountLink {
 
   @MainActor
   static func injectLocalStorage(tab: some TabState) async {
-    if let vpnSubscriptionProductId = Preferences.VPN.subscriptionProductId.value,
-      let product = BraveStoreProduct(rawValue: vpnSubscriptionProductId)
-    {
-      await BraveSkusAccountLink.injectLocalStorage(tab: tab, product: product)
-    }
-
+    #if !BRAVE_IOS_SLIM
     if let aiChatSubscriptionProductId = Preferences.AIChat.subscriptionProductId.value,
       let product = BraveStoreProduct(rawValue: aiChatSubscriptionProductId)
     {
       await BraveSkusAccountLink.injectLocalStorage(tab: tab, product: product)
     }
+    #endif
 
     if let originSubscriptionProductId = Preferences.BraveOrigin.purchaseProductId.value,
       let product = BraveStoreProduct(rawValue: originSubscriptionProductId)
@@ -73,6 +71,8 @@ class BraveSkusAccountLink {
     tab: some TabState,
     product: BraveStoreProduct
   ) async -> Bool {
+    guard let storageKey = product.localStorageKey else { return false }
+
     // The WebView has no URL so do nothing
     guard let url = tab.visibleURL else {
       return false
@@ -95,7 +95,6 @@ class BraveSkusAccountLink {
 
     do {
       // Retrieve the LocalStorage Key and Receipt to inject
-      let storageKey = product.localStorageKey
       let receipt = try AppStoreReceipt.receipt(for: product)
 
       // Inject the receipt into LocalStorage
@@ -105,6 +104,7 @@ class BraveSkusAccountLink {
         contentWorld: .defaultClient
       )
 
+      #if !BRAVE_IOS_SLIM
       // Brave-Leo requires Order-ID to be injected into LocalStorage.
       if let orderId = Preferences.AIChat.subscriptionOrderId.value {
         try await tab.evaluateJavaScript(
@@ -113,6 +113,7 @@ class BraveSkusAccountLink {
           contentWorld: .defaultClient
         )
       }
+      #endif
 
       if let orderId = Preferences.BraveOrigin.purchaseOrderId.value {
         try await tab.evaluateJavaScript(

@@ -2,6 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+import UserNotifications
+
+#if !BRAVE_IOS_SLIM
 import BraveCore
 import BraveShared
 import BraveUI
@@ -92,22 +95,6 @@ extension BrowserViewController {
     }
   }
 
-  /// Removes any scheduled or delivered ad grant reminders which may have been added prior to
-  /// removal of those reminders.
-  public func removeScheduledAdGrantReminders() {
-    let idPrefix = "rewards.notification.monthly-claim"
-    let center = UNUserNotificationCenter.current()
-    center.getPendingNotificationRequests { requests in
-      let ids =
-        requests
-        .filter { $0.identifier.hasPrefix(idPrefix) }
-        .map(\.identifier)
-      if ids.isEmpty { return }
-      center.removeDeliveredNotifications(withIdentifiers: ids)
-      center.removePendingNotificationRequests(withIdentifiers: ids)
-    }
-  }
-
   func setupLedger() {
     guard let rewardsAPI = rewards.rewardsAPI else { return }
     // Update defaults
@@ -173,6 +160,33 @@ extension BrowserViewController: BraveAdsCaptchaHandler {
         Preferences.Rewards.adaptiveCaptchaFailureCount.value += 1
         adsRewardsLog.error("Failed to solve adaptive captcha: \(error.localizedDescription)")
       }
+    }
+  }
+}
+#else
+extension BrowserViewController {
+  func updateRewardsButtonState() {
+    topToolbar.rewardsButton.isHidden = true
+  }
+
+  func showBraveRewardsPanel() {}
+}
+#endif
+
+extension BrowserViewController {
+  /// Removes any scheduled or delivered ad grant reminders which may have been added prior to
+  /// removal of those reminders.
+  public func removeScheduledAdGrantReminders() {
+    let idPrefix = "rewards.notification.monthly-claim"
+    let center = UNUserNotificationCenter.current()
+    center.getPendingNotificationRequests { requests in
+      let ids =
+        requests
+        .filter { $0.identifier.hasPrefix(idPrefix) }
+        .map(\.identifier)
+      if ids.isEmpty { return }
+      center.removeDeliveredNotifications(withIdentifiers: ids)
+      center.removePendingNotificationRequests(withIdentifiers: ids)
     }
   }
 }

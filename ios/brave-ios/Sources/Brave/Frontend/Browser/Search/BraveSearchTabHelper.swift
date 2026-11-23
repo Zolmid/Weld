@@ -30,8 +30,10 @@ class BraveSearchTabHelper: TabObserver, TabPolicyDecider, BraveSearchMakeDefaul
   /// A helper property that handles native to Brave Search communication.
   private var braveSearchManager: BraveSearchManager?
 
+  #if !BRAVE_IOS_SLIM
   /// A helper property that handles Brave Search Result Ads.
   private(set) var braveSearchResultAdManager: BraveSearchResultAdManager?
+  #endif
 
   var presentSearchResultClickedInfoBar: (() -> Void)?
 
@@ -115,6 +117,7 @@ class BraveSearchTabHelper: TabObserver, TabPolicyDecider, BraveSearchMakeDefaul
   }
 
   func tabDidFinishNavigation(_ tab: some TabState) {
+    #if !BRAVE_IOS_SLIM
     if FeatureList.kUseProfileWebViewConfiguration.enabled,
       let webView = BraveWebView.from(tab: tab),
       let url = tab.lastCommittedURL,
@@ -135,6 +138,7 @@ class BraveSearchTabHelper: TabObserver, TabPolicyDecider, BraveSearchMakeDefaul
         }
       }
     }
+    #endif
     // Second attempt to inject results to the BraveSearch.
     // This will be called if we got fallback results faster than
     // the page navigation.
@@ -203,6 +207,7 @@ class BraveSearchTabHelper: TabObserver, TabPolicyDecider, BraveSearchMakeDefaul
         cookies: cookies
       )
 
+      #if !BRAVE_IOS_SLIM
       let isAdBlockModeAggressive =
         tab.braveShieldsHelper?.shieldLevel(
           for: requestURL,
@@ -234,6 +239,7 @@ class BraveSearchTabHelper: TabObserver, TabPolicyDecider, BraveSearchMakeDefaul
           isAggressiveAdsBlocking: isAdBlockModeAggressive
         )
       }
+      #endif
 
       if let braveSearchManager = braveSearchManager {
         braveSearchManager.fallbackQueryResultsPending = true
@@ -256,7 +262,9 @@ class BraveSearchTabHelper: TabObserver, TabPolicyDecider, BraveSearchMakeDefaul
       }
     } else {
       braveSearchManager = nil
+      #if !BRAVE_IOS_SLIM
       braveSearchResultAdManager = nil
+      #endif
     }
 
     guard FeatureList.kQuickViewEnabled.enabled, Preferences.General.openLinkInQuickViewMode.value
@@ -300,6 +308,7 @@ class BraveSearchTabHelper: TabObserver, TabPolicyDecider, BraveSearchMakeDefaul
   func processSearchResultAds(
     _ searchResultAds: SearchResultAdResponse
   ) {
+    #if !BRAVE_IOS_SLIM
     guard let braveSearchResultAdManager else { return }
     for ad in searchResultAds.creatives {
       guard let rewardsValue = Double(ad.rewardsValue)
@@ -338,6 +347,7 @@ class BraveSearchTabHelper: TabObserver, TabPolicyDecider, BraveSearchMakeDefaul
         searchResultAd: searchResultAd
       )
     }
+    #endif
   }
 
   /// Call the api on the Brave Search website and passes the fallback results to it.

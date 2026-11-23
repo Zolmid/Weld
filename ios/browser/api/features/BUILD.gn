@@ -3,9 +3,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at https://mozilla.org/MPL/2.0/.
 
+import("//brave/components/ai_chat/core/common/buildflags/buildflags.gni")
 import("//brave/components/brave_wallet/common/buildflags/buildflags.gni")
 
 source_set("features") {
+  public_configs = [ "//brave/ios/app:public_buildflags_config" ]
+  public_deps = [ "//brave/ios/app:public_buildflags" ]
   sources = [
     "features.h",
     "features.mm",
@@ -13,7 +16,7 @@ source_set("features") {
 
   deps = [
     "//base",
-    "//brave/components/ai_chat/core/common",
+    "//brave/components/ai_chat/core/common/buildflags",
     "//brave/components/brave_component_updater/browser:public",
     "//brave/components/brave_news/common",
     "//brave/components/brave_origin:features",
@@ -42,6 +45,10 @@ source_set("features") {
     "//build:blink_buildflags",
     "//net",
   ]
+
+  if (enable_ai_chat) {
+    deps += [ "//brave/components/ai_chat/core/common" ]
+  }
 
   if (enable_brave_wallet) {
     deps += [

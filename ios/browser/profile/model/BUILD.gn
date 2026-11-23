@@ -3,6 +3,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at https://mozilla.org/MPL/2.0/.
 
+import("//brave/components/ai_chat/core/common/buildflags/buildflags.gni")
+import("//brave/components/brave_ads/buildflags/buildflags.gni")
+import("//brave/components/brave_wallet/common/buildflags/buildflags.gni")
 import("//build/config/ios/rules.gni")
 import("//ios/build/config.gni")
 
@@ -13,19 +16,30 @@ source_set("keyed_service_factories") {
   ]
   deps = [
     "//base",
+    "//brave/components/ai_chat/core/common/buildflags",
     "//brave/components/brave_account:features",
-    "//brave/ios/browser/ai_chat",
+    "//brave/components/brave_ads/buildflags",
+    "//brave/components/brave_wallet/common/buildflags",
     "//brave/ios/browser/api/webcompat_reporter",
     "//brave/ios/browser/brave_account",
-    "//brave/ios/browser/brave_ads",
     "//brave/ios/browser/brave_origin",
     "//brave/ios/browser/brave_shields",
-    "//brave/ios/browser/brave_wallet",
     "//brave/ios/browser/debounce",
     "//brave/ios/browser/favicon",
-    "//brave/ios/browser/misc_metrics",
     "//brave/ios/browser/serp_metrics",
     "//brave/ios/browser/skus",
     "//brave/ios/browser/url_sanitizer",
   ]
+  if (enable_ai_chat) {
+    deps += [
+      "//brave/ios/browser/ai_chat",
+      "//brave/ios/browser/misc_metrics",
+    ]
+  }
+  if (enable_brave_wallet) {
+    deps += [ "//brave/ios/browser/brave_wallet" ]
+  }
+  if (enable_brave_ads) {
+    deps += [ "//brave/ios/browser/brave_ads" ]
+  }
 }

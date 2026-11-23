@@ -14,6 +14,7 @@ import os.log
 /// The alert is a resource blocked by the VPN service
 public final class BraveVPNAlert: NSManagedObject, CRUD, Identifiable {
 
+  #if !BRAVE_IOS_SLIM
   /// Currently unused. This is persisted in case we need it in the future.
   public enum Action: Int {
     case drop
@@ -28,6 +29,7 @@ public final class BraveVPNAlert: NSManagedObject, CRUD, Identifiable {
     /// An email tracker
     case mail
   }
+  #endif
 
   /// Currently unused. This is persisted in case we need it in the future.
   @NSManaged public var action: Int32
@@ -44,15 +46,20 @@ public final class BraveVPNAlert: NSManagedObject, CRUD, Identifiable {
   /// Unique identifier of the blocked resource. Must be unique.
   @NSManaged public var uuid: String
 
+  public var id: String {
+    uuid
+  }
+
+  // Retain deletion of legacy records so clearing browsing data still removes them.
+  public static func clearData() {
+    deleteAll()
+  }
+
+  #if !BRAVE_IOS_SLIM
   /// Category value is stored as a number in the database. This converts it and returns a proper `TrackerType` enum value for it.
   /// Returns nil if there's no category for a given number.
   public var categoryEnum: TrackerType? {
     return .init(rawValue: Int(category))
-  }
-
-  public var id: String {
-    // UUID is a unique constraint, this should be enough for identifying the alert.
-    uuid
   }
 
   /// Inserts new VPN alerts to the database. VPN alerts that already exist are skipped.
@@ -175,10 +182,6 @@ public final class BraveVPNAlert: NSManagedObject, CRUD, Identifiable {
     }
   }
 
-  public static func clearData() {
-    deleteAll()
-  }
-
   public static func consolidateData(olderThan days: Int) {
 
     struct ConsolidatedVPNAlert: Hashable {
@@ -258,4 +261,5 @@ public final class BraveVPNAlert: NSManagedObject, CRUD, Identifiable {
   private class func entity(in context: NSManagedObjectContext) -> NSEntityDescription? {
     NSEntityDescription.entity(forEntityName: "BraveVPNAlert", in: context)
   }
+  #endif
 }

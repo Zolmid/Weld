@@ -34,17 +34,21 @@ struct UserScriptsDebugView: View {
   @ObservedObject
   private var trackingProtectionStats = Preferences.UserScript.trackingProtectionStats
 
+  #if !BRAVE_IOS_SLIM
   @ObservedObject
   private var ethereumProvider = Preferences.UserScript.ethereumProvider
 
   @ObservedObject
   private var solanaProvider = Preferences.UserScript.solanaProvider
+  #endif
 
   @ObservedObject
   private var youtubeQuality = Preferences.UserScript.youtubeQuality
 
+  #if !BRAVE_IOS_SLIM
   @ObservedObject
   private var leo = Preferences.UserScript.leo
+  #endif
 
   @ObservedObject
   private var translate = Preferences.UserScript.translate
@@ -75,13 +79,17 @@ struct UserScriptsDebugView: View {
 
         Toggle("Tracking Protection Stats", isOn: $trackingProtectionStats.value)
 
+        #if !BRAVE_IOS_SLIM
         Toggle("Ethereum Provider", isOn: $ethereumProvider.value)
 
         Toggle("Solana Provider", isOn: $solanaProvider.value)
+        #endif
 
         Toggle("Youtube Quality", isOn: $youtubeQuality.value)
 
+        #if !BRAVE_IOS_SLIM
         Toggle("Leo/AI-Chat", isOn: $leo.value)
+        #endif
 
         Toggle("Brave Translate", isOn: $translate.value)
       }

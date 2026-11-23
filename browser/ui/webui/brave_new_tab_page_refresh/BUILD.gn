@@ -51,6 +51,7 @@ source_set("brave_new_tab_page_refresh") {
 
   deps = [
     ":mojom",
+    "//brave/build:promotion_buildflags",
     "//brave/browser:browser_process",
     "//brave/browser/brave_stats:first_run_util",
     "//brave/browser/misc_metrics",

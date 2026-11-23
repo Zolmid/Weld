@@ -32,6 +32,12 @@ extension WidgetShortcut {
     if !prefs.isBraveNewsAvailable {
       options.remove(.braveNews)
     }
+    #if BRAVE_IOS_SLIM
+    options.remove(.wallet)
+    options.remove(.braveLeo)
+    options.remove(.askBrave)
+    options.remove(.braveLeoVoiceInput)
+    #else
     if !isWalletAvailable {
       options.remove(.wallet)
     }
@@ -39,6 +45,7 @@ extension WidgetShortcut {
       options.remove(.braveLeo)
       options.remove(.braveLeoVoiceInput)
     }
+    #endif
     return options
   }
 
@@ -55,6 +62,9 @@ extension WidgetShortcut {
     if !prefs.isBraveNewsAvailable {
       disabled.insert(.braveNews)
     }
+    #if BRAVE_IOS_SLIM
+    disabled.formUnion([.wallet, .braveLeo, .askBrave, .braveLeoVoiceInput])
+    #else
     if !isWalletAvailable {
       disabled.insert(.wallet)
     }
@@ -62,6 +72,7 @@ extension WidgetShortcut {
       disabled.insert(.braveLeo)
       disabled.insert(.braveLeoVoiceInput)
     }
+    #endif
     return disabled
   }
 

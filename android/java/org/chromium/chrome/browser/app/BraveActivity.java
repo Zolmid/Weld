@@ -99,6 +99,7 @@ import org.chromium.brave_wallet.mojom.TxService;
 import org.chromium.build.annotations.MonotonicNonNull;
 import org.chromium.chrome.R;
 import org.chromium.chrome.browser.BraveAdFreeCalloutDialogFragment;
+import org.chromium.chrome.browser.BraveConfig;
 import org.chromium.chrome.browser.BraveConstants;
 import org.chromium.chrome.browser.BraveHelper;
 import org.chromium.chrome.browser.BraveIntentHandler;
@@ -1046,6 +1047,9 @@ public abstract class BraveActivity extends ChromeActivity
     };
 
     private void checkForVpn() {
+        if (!BraveConfig.ENABLE_VPN) {
+            return;
+        }
         BraveVpnNativeWorker.getInstance().reportForegroundP3A();
         new Thread() {
             @Override
@@ -1286,7 +1290,9 @@ public abstract class BraveActivity extends ChromeActivity
 
         String countryCode = Locale.getDefault().getCountry();
 
-        BraveVpnNativeWorker.getInstance().reloadPurchasedState();
+        if (BraveConfig.ENABLE_VPN) {
+            BraveVpnNativeWorker.getInstance().reloadPurchasedState();
+        }
 
         BraveHelper.maybeMigrateSettings();
 
@@ -1327,7 +1333,7 @@ public abstract class BraveActivity extends ChromeActivity
                     getCurrentProfile(), PreloadPagesState.NO_PRELOADING);
         }
 
-        if (BraveRewardsHelper.hasRewardsEnvChange()) {
+        if (BraveConfig.ENABLE_REWARDS && BraveRewardsHelper.hasRewardsEnvChange()) {
             BravePrefServiceBridge.getInstance().resetPromotionLastFetchStamp();
             BraveRewardsHelper.setRewardsEnvChange(false);
         }
@@ -1412,7 +1418,9 @@ public abstract class BraveActivity extends ChromeActivity
 
         BraveSyncAccountDeletedInformer.show();
 
-        if (!OnboardingPrefManager.getInstance().isOneTimeNotificationStarted() && isFirstInstall) {
+        if (BraveConfig.ENABLE_PROMOTIONS
+                && isFirstInstall
+                && !OnboardingPrefManager.getInstance().isOneTimeNotificationStarted()) {
             RetentionNotificationUtil.scheduleNotification(this, RetentionNotificationUtil.HOUR_3);
             RetentionNotificationUtil.scheduleNotification(this, RetentionNotificationUtil.HOUR_24);
             RetentionNotificationUtil.scheduleNotification(this, RetentionNotificationUtil.DAY_6);
@@ -1422,7 +1430,8 @@ public abstract class BraveActivity extends ChromeActivity
             OnboardingPrefManager.getInstance().setOneTimeNotificationStarted(true);
         }
 
-        if (isFirstInstall
+        if (BraveConfig.ENABLE_PROMOTIONS
+                && isFirstInstall
                 && ChromeSharedPreferences.getInstance()
                                 .readInt(BravePreferenceKeys.BRAVE_APP_OPEN_COUNT)
                         == 1) {
@@ -1435,7 +1444,8 @@ public abstract class BraveActivity extends ChromeActivity
         checkFingerPrintingOnUpgrade(isFirstInstall);
         checkForVpnCallout();
 
-        if (ChromeFeatureList.isEnabled(BraveFeatureList.BRAVE_VPN_LINK_SUBSCRIPTION_ANDROID_UI)
+        if (BraveConfig.ENABLE_VPN
+                && ChromeFeatureList.isEnabled(BraveFeatureList.BRAVE_VPN_LINK_SUBSCRIPTION_ANDROID_UI)
                 && BraveVpnPrefUtils.isSubscriptionPurchase()
                 && !BraveVpnPrefUtils.isLinkSubscriptionDialogShown()
                 && !BraveVpnPolicy.isDisabledByPolicy(mTabModelProfileSupplier.get())) {
@@ -1469,7 +1479,8 @@ public abstract class BraveActivity extends ChromeActivity
                         }
                     });
         }
-        if (isFirstInstall
+        if (BraveConfig.ENABLE_PROMOTIONS
+                && isFirstInstall
                 && (OnboardingPrefManager.getInstance().isDormantUsersEngagementEnabled()
                         || getPackageName().equals(BraveConstants.BRAVE_PRODUCTION_PACKAGE_NAME))) {
             OnboardingPrefManager.getInstance().setDormantUsersPrefs();
@@ -1482,7 +1493,8 @@ public abstract class BraveActivity extends ChromeActivity
 
         mNativeInitialized = true;
 
-        if (countryCode.equals(BraveConstants.INDIA_COUNTRY_CODE)
+        if (BraveConfig.ENABLE_PROMOTIONS
+                && countryCode.equals(BraveConstants.INDIA_COUNTRY_CODE)
                 && ChromeSharedPreferences.getInstance()
                         .readBoolean(BravePreferenceKeys.BRAVE_AD_FREE_CALLOUT_DIALOG, true)
                 && getActivityTab() != null
@@ -1498,17 +1510,19 @@ public abstract class BraveActivity extends ChromeActivity
         }
 
         initBraveNews();
-        if (ChromeSharedPreferences.getInstance()
+        if (BraveConfig.ENABLE_PROMOTIONS
+                && ChromeSharedPreferences.getInstance()
                 .readBoolean(BravePreferenceKeys.BRAVE_DEFERRED_DEEPLINK_PLAYLIST, false)) {
             ChromeSharedPreferences.getInstance()
                     .writeBoolean(BravePreferenceKeys.BRAVE_DEFERRED_DEEPLINK_PLAYLIST, false);
             openPlaylist(false);
-        } else if (ChromeSharedPreferences.getInstance()
+        } else if (BraveConfig.ENABLE_PROMOTIONS
+                && ChromeSharedPreferences.getInstance()
                 .readBoolean(BravePreferenceKeys.BRAVE_DEFERRED_DEEPLINK_VPN, false)) {
             ChromeSharedPreferences.getInstance()
                     .writeBoolean(BravePreferenceKeys.BRAVE_DEFERRED_DEEPLINK_VPN, false);
             handleDeepLinkVpn();
-        } else if (BraveOriginDeepLinkHandler.consumeDeferred()) {
+        } else if (BraveConfig.ENABLE_PROMOTIONS && BraveOriginDeepLinkHandler.consumeDeferred()) {
             mIsDeepLink = true;
             BraveOriginDeepLinkHandler.open(this);
         }
@@ -1532,7 +1546,9 @@ public abstract class BraveActivity extends ChromeActivity
             Calendar calendar = Calendar.getInstance();
             calendar.setTime(new Date());
             calendar.add(Calendar.DATE, DAYS_7);
-            BraveRewardsHelper.setRewardsOnboardingIconTiming(calendar.getTimeInMillis());
+            if (BraveConfig.ENABLE_PROMOTIONS) {
+                BraveRewardsHelper.setRewardsOnboardingIconTiming(calendar.getTimeInMillis());
+            }
 
             setInAppUpdateTiming();
         }
@@ -1554,7 +1570,8 @@ public abstract class BraveActivity extends ChromeActivity
             checkAppUpdate();
         }
 
-        if (!isFirstInstall
+        if (BraveConfig.ENABLE_PROMOTIONS
+                && !isFirstInstall
                 && !BravePrefServiceBridge.getInstance().getPlayYTVideoInBrowserEnabled()
                 && ChromeSharedPreferences.getInstance()
                         .readBoolean(BravePreferenceKeys.OPEN_YT_IN_BRAVE_DIALOG, true)
@@ -1598,8 +1615,10 @@ public abstract class BraveActivity extends ChromeActivity
                         @Override
                         public void afterTextChanged(Editable s) {}
                     });
-            if (ChromeSharedPreferences.getInstance()
-                    .readBoolean(OnboardingPrefManager.SHOULD_SHOW_SEARCH_WIDGET_PROMO, false)) {
+            if (BraveConfig.ENABLE_PROMOTIONS
+                    && ChromeSharedPreferences.getInstance()
+                            .readBoolean(
+                                    OnboardingPrefManager.SHOULD_SHOW_SEARCH_WIDGET_PROMO, false)) {
                 mSearchWidgetPromoPanel = new SearchWidgetPromoPanel();
                 showWidgetPromoPanel();
                 ChromeSharedPreferences.getInstance()
@@ -2034,6 +2053,9 @@ public abstract class BraveActivity extends ChromeActivity
                         != null) {
             String notificationType =
                     notifIntent.getStringExtra(RetentionNotificationUtil.NOTIFICATION_TYPE);
+            if (!RetentionNotificationUtil.areEnabled()) {
+                return;
+            }
             switch (notificationType) {
                 case RetentionNotificationUtil.HOUR_3:
                 case RetentionNotificationUtil.HOUR_24:
@@ -2081,6 +2103,10 @@ public abstract class BraveActivity extends ChromeActivity
     }
 
     public void showOnboardingV2(boolean fromStats) {
+        if (!BraveConfig.ENABLE_PROMOTIONS) {
+            BraveStatsUtil.showBraveStats();
+            return;
+        }
         try {
             OnboardingPrefManager.getInstance().setNewOnboardingShown(true);
             FragmentManager fm = getSupportFragmentManager();

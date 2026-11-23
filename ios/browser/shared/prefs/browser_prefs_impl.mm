@@ -5,12 +5,9 @@
 
 #include "base/notreached.h"
 #include "base/version_info/channel.h"
-#include "brave/components/ai_chat/core/browser/ai_chat_metrics.h"
-#include "brave/components/ai_chat/core/browser/model_service.h"
-#include "brave/components/ai_chat/core/common/pref_names.h"
+#include "brave/components/ai_chat/core/common/buildflags/buildflags.h"
 #include "brave/components/brave_account/prefs.h"
-#include "brave/components/brave_ads/core/public/prefs/obsolete_pref_util.h"
-#include "brave/components/brave_ads/core/public/prefs/pref_registry.h"
+#include "brave/components/brave_ads/buildflags/buildflags.h"
 #include "brave/components/brave_news/common/pref_names.h"
 #include "brave/components/brave_origin/brave_origin_prefs.h"
 #include "brave/components/brave_rewards/core/pref_registry.h"
@@ -23,7 +20,6 @@
 #include "brave/components/constants/pref_names.h"
 #include "brave/components/de_amp/common/pref_names.h"
 #include "brave/components/debounce/core/browser/debounce_service.h"
-#include "brave/components/decentralized_dns/core/utils.h"
 #include "brave/components/global_privacy_control/pref_names.h"
 #include "brave/components/l10n/common/prefs.h"
 #include "brave/components/ntp_background_images/browser/ntp_background_images_service.h"
@@ -42,6 +38,17 @@
 #include "components/pref_registry/pref_registry_syncable.h"
 #include "ios/chrome/common/channel_info.h"
 
+#if BUILDFLAG(ENABLE_AI_CHAT)
+#include "brave/components/ai_chat/core/browser/ai_chat_metrics.h"
+#include "brave/components/ai_chat/core/browser/model_service.h"
+#include "brave/components/ai_chat/core/common/pref_names.h"
+#endif
+
+#if BUILDFLAG(ENABLE_BRAVE_ADS)
+#include "brave/components/brave_ads/core/public/prefs/obsolete_pref_util.h"
+#include "brave/components/brave_ads/core/public/prefs/pref_registry.h"
+#endif
+
 #if BUILDFLAG(ENABLE_BRAVE_VPN)
 #include "brave/components/brave_vpn/common/pref_names.h"
 #endif
@@ -53,6 +60,7 @@
 #if BUILDFLAG(ENABLE_BRAVE_WALLET)
 #include "brave/components/brave_wallet/browser/keyring_service.h"
 #include "brave/components/brave_wallet/browser/pref_names.h"
+#include "brave/components/decentralized_dns/core/utils.h"
 #endif
 
 namespace brave {
@@ -78,8 +86,10 @@ bool GetDefaultPrefValueForMetricsReporting() {
 }  // namespace
 
 void RegisterBrowserStatePrefs(user_prefs::PrefRegistrySyncable* registry) {
+#if BUILDFLAG(ENABLE_BRAVE_ADS)
   brave_ads::RegisterProfilePrefs(registry);
   brave_ads::RegisterProfilePrefsForMigration(registry);
+#endif
   brave_rewards::RegisterProfilePrefs(registry);
   brave_rewards::RegisterProfilePrefsForMigration(registry);
   brave_sync::Prefs::RegisterProfilePrefs(registry);
@@ -90,8 +100,10 @@ void RegisterBrowserStatePrefs(user_prefs::PrefRegistrySyncable* registry) {
   de_amp::RegisterProfilePrefs(registry);
   debounce::DebounceService::RegisterProfilePrefs(registry);
   search_engines::RegisterProfilePrefs(registry);
+#if BUILDFLAG(ENABLE_AI_CHAT)
   ai_chat::prefs::RegisterProfilePrefs(registry);
   ai_chat::ModelService::RegisterProfilePrefs(registry);
+#endif
   brave_account::prefs::RegisterPrefs(registry);
   omnibox::RegisterBraveProfilePrefs(registry);
   brave_news::prefs::RegisterProfilePrefs(registry);
@@ -122,14 +134,16 @@ void RegisterBrowserStatePrefs(user_prefs::PrefRegistrySyncable* registry) {
 }
 
 void RegisterLocalStatePrefs(PrefRegistrySimple* registry) {
+#if BUILDFLAG(ENABLE_BRAVE_ADS)
   brave_ads::RegisterLocalStatePrefs(registry);
+#endif
   brave_stats::RegisterLocalStatePrefs(registry);
   brave_stats::RegisterLocalStatePrefsForMigration(registry);
 #if BUILDFLAG(ENABLE_BRAVE_WALLET)
   brave_wallet::RegisterLocalStatePrefs(registry);
   brave_wallet::RegisterLocalStatePrefsForMigration(registry);
-#endif
   decentralized_dns::RegisterLocalStatePrefs(registry);
+#endif
   skus::RegisterLocalStatePrefs(registry);
   p3a::P3AService::RegisterPrefs(registry, false);
   p3a::MetricLogStore::RegisterLocalStatePrefsForMigration(registry);
@@ -137,8 +151,10 @@ void RegisterLocalStatePrefs(PrefRegistrySimple* registry) {
   ntp_background_images::NTPBackgroundImagesService::
       RegisterLocalStatePrefsForMigration(registry);
   brave_l10n::RegisterLocalStatePrefsForMigration(registry);
+#if BUILDFLAG(ENABLE_AI_CHAT)
   ai_chat::prefs::RegisterLocalStatePrefs(registry);
   ai_chat::AIChatMetrics::RegisterPrefs(registry);
+#endif
   ntp_background_images::RegisterLocalStatePrefs(registry);
   brave_shields::RegisterShieldsP3ALocalPrefs(registry);
   brave_origin::RegisterLocalStatePrefs(registry);
@@ -170,7 +186,9 @@ void RegisterLocalStatePrefs(PrefRegistrySimple* registry) {
 
 void MigrateObsoleteProfilePrefs(PrefService* prefs) {
   brave_account::prefs::MigrateObsoleteProfilePrefs(prefs);
+#if BUILDFLAG(ENABLE_BRAVE_ADS)
   brave_ads::MigrateObsoleteProfilePrefs(prefs);
+#endif
 #if BUILDFLAG(ENABLE_BRAVE_WALLET)
   brave_wallet::MigrateObsoleteProfilePrefs(prefs);
 #endif

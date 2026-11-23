@@ -6,7 +6,6 @@
 # TODO(https://github.com/brave/brave-browser/issues/48186): Move to root of
 # component.
 
-import("//brave/components/brave_origin/buildflags/buildflags.gni")
 import("//build/buildflag_header.gni")
 import("buildflags.gni")
 
@@ -14,12 +13,8 @@ declare_args() {
   service_key_aichat = ""
 }
 
-if (is_official_build) {
-  # Not needed for Brave Origin builds, which ship with AI Chat disabled
-  # (enable_ai_chat = !is_brave_origin_branded).
-  if (!is_brave_origin_branded) {
-    assert(service_key_aichat != "")
-  }
+if (is_official_build && enable_ai_chat) {
+  assert(service_key_aichat != "")
 }
 
 buildflag_header("buildflags") {

@@ -20,9 +20,14 @@ extension BrowserViewController: NSFetchedResultsControllerDelegate {
   /// by a Brave Origin policy) to shared storage so the Shortcuts widgets can
   /// hide them from both the configuration picker and installed widgets.
   func updateWidgetShortcutsData() {
+    #if BRAVE_IOS_SLIM
+    let isWalletAvailable = false
+    #else
+    let isWalletAvailable = profileController.braveWalletAPI.isAllowed
+    #endif
     let disabled = WidgetShortcut.disabledWidgetShortcuts(
       prefs: profileController.profile.prefs,
-      isWalletAvailable: profileController.braveWalletAPI.isAllowed
+      isWalletAvailable: isWalletAvailable
     )
     Task {
       await DisabledShortcutsWidgetData.updateDisabledShortcuts(disabled)

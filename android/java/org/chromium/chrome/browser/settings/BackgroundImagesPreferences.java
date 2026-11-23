@@ -22,6 +22,7 @@ import org.chromium.base.supplier.SettableMonotonicObservableSupplier;
 import org.chromium.build.annotations.NullMarked;
 import org.chromium.build.annotations.Nullable;
 import org.chromium.chrome.R;
+import org.chromium.chrome.browser.BraveConfig;
 import org.chromium.chrome.browser.BraveRelaunchUtils;
 import org.chromium.chrome.browser.BraveRewardsPolicy;
 import org.chromium.chrome.browser.app.BraveActivity;
@@ -101,10 +102,11 @@ public class BackgroundImagesPreferences extends BravePreferenceFragment
                             .getBoolean(BravePref.NEW_TAB_PAGE_SHOW_BACKGROUND_IMAGE));
             mShowBackgroundImagesPref.setOnPreferenceChangeListener(this);
         }
-        boolean rewardsDisabledByPolicy = BraveRewardsPolicy.isDisabledByPolicy(getProfile());
+        boolean hideSponsoredContent =
+                !BraveConfig.ENABLE_ADS || BraveRewardsPolicy.isDisabledByPolicy(getProfile());
         mShowSponsoredContentPref =
                 (ChromeSwitchPreference) findPreference(PREF_SHOW_SPONSORED_CONTENT);
-        if (mShowSponsoredContentPref != null && rewardsDisabledByPolicy) {
+        if (mShowSponsoredContentPref != null && hideSponsoredContent) {
             mShowSponsoredContentPref.setVisible(false);
         } else if (mShowSponsoredContentPref != null) {
             mShowSponsoredContentPref.setEnabled(
@@ -116,7 +118,7 @@ public class BackgroundImagesPreferences extends BravePreferenceFragment
         }
         mLearnMorePreference =
                 (BraveTextButtonPreference) findPreference(PREF_SPONSORED_CONTENT_LEARN_MORE);
-        if (mLearnMorePreference != null && rewardsDisabledByPolicy) {
+        if (mLearnMorePreference != null && hideSponsoredContent) {
             mLearnMorePreference.setVisible(false);
         } else if (mLearnMorePreference != null) {
             mLearnMorePreference.setOnPreferenceClickListener(

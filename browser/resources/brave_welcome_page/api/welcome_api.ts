@@ -93,6 +93,7 @@ interface ApiInit {
     importData: (profileIndex: number, types: Set<ImportDataType>) => void
     addImportStatusListener: (fn: (status: ImportDataStatus) => void) => void
   }
+  promotionsEnabled: boolean
   isCrashReportingPrefManaged: boolean
   isP3APrefManaged: boolean
   isWebDiscoveryPrefManaged: boolean
@@ -146,6 +147,7 @@ function defaultInit(): ApiInit {
         })
       },
     },
+    promotionsEnabled: loadTimeData.getBoolean('promotionsEnabled'),
     isCrashReportingPrefManaged: loadTimeData.getBoolean(
       'isCrashReportingPrefManaged',
     ),
@@ -239,6 +241,7 @@ export function createWelcomeApi(init = defaultInit()) {
         query: () => init.messages.getBrowserProfilesForImport(),
       },
       importDataStatus: state<ImportDataStatus>(''),
+      promotionsEnabled: state(init.promotionsEnabled),
       isCrashReportingPrefManaged: state(init.isCrashReportingPrefManaged),
       isP3APrefManaged: state(init.isP3APrefManaged),
       isWebDiscoveryPrefManaged: state(init.isWebDiscoveryPrefManaged),

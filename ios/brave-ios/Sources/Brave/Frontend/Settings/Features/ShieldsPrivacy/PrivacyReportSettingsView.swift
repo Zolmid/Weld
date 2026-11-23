@@ -11,7 +11,6 @@ import SwiftUI
 struct PrivacyReportSettingsView: View {
 
   @ObservedObject private var shieldsDataEnabled = Preferences.PrivacyReports.captureShieldsData
-  @ObservedObject private var vpnAlertsEnabled = Preferences.PrivacyReports.captureVPNAlerts
 
   @State private var showClearDataPrompt: Bool = false
 
@@ -19,10 +18,6 @@ struct PrivacyReportSettingsView: View {
     Form {
       Section(footer: Text(Strings.PrivacyHub.settingsEnableShieldsFooter)) {
         Toggle(Strings.PrivacyHub.settingsEnableShieldsTitle, isOn: $shieldsDataEnabled.value)
-          .tint(Color(braveSystemName: .primitivePrimary40))
-      }
-      Section(footer: Text(Strings.PrivacyHub.settingsEnableVPNAlertsFooter)) {
-        Toggle(Strings.PrivacyHub.settingsEnableVPNAlertsTitle, isOn: $vpnAlertsEnabled.value)
           .tint(Color(braveSystemName: .primitivePrimary40))
       }
       Section(footer: Text(Strings.PrivacyHub.settingsSlearDataFooter)) {

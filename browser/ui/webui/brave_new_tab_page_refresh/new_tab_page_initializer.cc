@@ -17,6 +17,7 @@
 #include "brave/browser/ui/brave_ui_features.h"
 #include "brave/browser/ui/webui/brave_sanitized_image_source.h"
 #include "brave/browser/ui/webui/brave_webui_source.h"
+#include "brave/build/promotion_buildflags.h"
 #include "brave/components/ai_chat/core/common/buildflags/buildflags.h"
 #include "brave/components/brave_news/common/buildflags/buildflags.h"
 #include "brave/components/brave_rewards/core/buildflags/buildflags.h"
@@ -235,7 +236,9 @@ void NewTabPageInitializer::AddLoadTimeValues() {
   source_->AddBoolean(
       "newsFeatureEnabled",
       news_feed_update_enabled &&
-          !prefs->GetBoolean(brave_news::prefs::kBraveNewsDisabledByPolicy));
+          !prefs->GetBoolean(brave_news::prefs::kBraveNewsDisabledByPolicy) &&
+          (prefs->GetBoolean(brave_news::prefs::kBraveNewsOptedIn) ||
+           BUILDFLAG(ENABLE_BRAVE_PROMOTIONS)));
 #else
   source_->AddBoolean("featureFlagBraveNewsFeedV2Enabled", false);
   source_->AddBoolean("newsFeatureEnabled", false);
@@ -243,7 +246,8 @@ void NewTabPageInitializer::AddLoadTimeValues() {
 
 #if BUILDFLAG(ENABLE_BRAVE_TALK)
   source_->AddBoolean("talkFeatureEnabled",
-                      !prefs->GetBoolean(brave_talk::prefs::kDisabledByPolicy));
+                      !prefs->GetBoolean(brave_talk::prefs::kDisabledByPolicy) &&
+                          BUILDFLAG(ENABLE_BRAVE_PROMOTIONS));
 #else
   source_->AddBoolean("talkFeatureEnabled", false);
 #endif  // BUILDFLAG(ENABLE_BRAVE_TALK)

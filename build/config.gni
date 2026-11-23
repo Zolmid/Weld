@@ -11,6 +11,9 @@ import("//build/util/branding.gni")
 import("//chrome/version.gni")
 
 declare_args() {
+  # Allow automatic product promotions and optional onboarding callouts.
+  enable_brave_promotions = true
+
   base_sparkle_update_url = ""
   enable_sparkle = !is_component_build && is_mac
   build_sparkle = false

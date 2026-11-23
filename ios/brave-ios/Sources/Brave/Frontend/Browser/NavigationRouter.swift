@@ -11,7 +11,6 @@ import Shared
 // Used by the App to navigate to different views.
 // To open a URL use /open-url or to open a blank tab use /open-url with no params
 public enum DeepLink: String {
-  case vpnCrossPlatformPromo = "vpn_promo"
   case braveLeo = "brave_leo"
   case playlist
   case browserMenu = "menu"
@@ -91,10 +90,11 @@ public enum NavigationPath: Equatable {
 
   private static func handleDeepLink(_ link: DeepLink, with bvc: BrowserViewController) {
     switch link {
-    case .vpnCrossPlatformPromo:
-      bvc.presentVPNInAppEventCallout()
     case .braveLeo:
+      #if !BRAVE_IOS_SLIM
       bvc.presentBraveLeoDeepLink()
+      #endif
+      break
     case .playlist:
       let helper = BrowserNavigationHelper(bvc)
       helper.openPlaylist()
@@ -224,7 +224,10 @@ public enum NavigationPath: Equatable {
     case .playlist:
       bvc.navigationHelper.openPlaylist()
     case .wallet:
+      #if !BRAVE_IOS_SLIM
       bvc.navigationHelper.openWallet()
+      #endif
+      break
     case .scanQRCode:
       bvc.scanQRCode()
     case .braveNews:
@@ -236,12 +239,18 @@ public enum NavigationPath: Equatable {
       }
       newTabPageController.scrollToBraveNews()
     case .braveLeo:
+      #if !BRAVE_IOS_SLIM
       bvc.popToBVC()
       bvc.openBraveLeo()
+      #endif
+      break
     case .braveLeoVoiceInput:
+      #if !BRAVE_IOS_SLIM
       bvc.popToBVC {
         bvc.presentLeoVoiceInput()
       }
+      #endif
+      break
     case .askBrave:
       guard let url = URL(string: "https://search.brave.com/ask") else { return }
       bvc.popToBVC()

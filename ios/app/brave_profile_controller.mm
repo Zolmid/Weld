@@ -8,10 +8,11 @@
 #include "base/check.h"
 #include "base/functional/callback_helpers.h"
 #include "base/memory/raw_ptr.h"
+#include "brave/components/brave_ads/buildflags/buildflags.h"
+#include "brave/components/brave_wallet/common/buildflags/buildflags.h"
 #include "brave/components/ntp_background_images/browser/ntp_background_images_service.h"
 #include "brave/ios/browser/api/bookmarks/brave_bookmarks_api+private.h"
 #include "brave/ios/browser/api/brave_stats/brave_stats+private.h"
-#include "brave/ios/browser/api/brave_wallet/brave_wallet_api+private.h"
 #include "brave/ios/browser/api/content_settings/default_host_content_settings.h"
 #include "brave/ios/browser/api/content_settings/default_host_content_settings_internal.h"
 #include "brave/ios/browser/api/history/brave_history_api+private.h"
@@ -29,8 +30,6 @@
 #include "brave/ios/browser/api/web_view/brave_web_view_configuration_provider.h"
 #include "brave/ios/browser/api/web_view/brave_web_view_download_manager.h"
 #include "brave/ios/browser/application_context/brave_application_context_impl.h"
-#include "brave/ios/browser/brave_ads/ads_service_factory_ios.h"
-#include "brave/ios/browser/brave_ads/ads_service_impl_ios.h"
 #include "components/content_settings/core/browser/content_settings_utils.h"
 #include "components/history/core/browser/history_service.h"
 #include "components/keyed_service/core/service_access_type.h"
@@ -70,6 +69,15 @@
 #include "ios/web_view/internal/web_view_browser_state.h"
 #include "services/network/public/cpp/shared_url_loader_factory.h"
 
+#if BUILDFLAG(ENABLE_BRAVE_ADS)
+#include "brave/ios/browser/brave_ads/ads_service_factory_ios.h"
+#include "brave/ios/browser/brave_ads/ads_service_impl_ios.h"
+#endif
+
+#if BUILDFLAG(ENABLE_BRAVE_WALLET)
+#include "brave/ios/browser/api/brave_wallet/brave_wallet_api+private.h"
+#endif
+
 #if BUILDFLAG(IOS_CREDENTIAL_PROVIDER_ENABLED)
 #include "ios/chrome/browser/credential_provider/model/credential_provider_service_factory.h"
 #include "ios/chrome/browser/credential_provider/model/credential_provider_util.h"
@@ -94,7 +102,9 @@
 @property(nonatomic) BraveSyncAPI* syncAPI;
 @property(nonatomic) BraveSyncProfileServiceIOS* syncProfileService;
 @property(nonatomic) BraveTabGeneratorAPI* tabGeneratorAPI;
+#if BUILDFLAG(ENABLE_BRAVE_WALLET)
 @property(nonatomic) BraveWalletAPI* braveWalletAPI;
+#endif
 @property(nonatomic) IpfsAPIImpl* ipfsAPI;
 @property(nonatomic) WebImageDownloader* webImageDownloader;
 @property(nonatomic) NTPBackgroundImagesService* backgroundImagesService;
@@ -152,14 +162,17 @@
     _otrDownloadManager = std::make_unique<BraveWebViewDownloadManager>(
         _profile->GetOffTheRecordProfile());
 
+    brave_ads::AdsService* ads_service = nullptr;
+#if BUILDFLAG(ENABLE_BRAVE_ADS)
+    ads_service = brave_ads::AdsServiceFactoryIOS::GetForProfile(_profile);
+#endif
     _backgroundImagesService = [[NTPBackgroundImagesService alloc]
         initWithBackgroundImagesService:
             std::make_unique<ntp_background_images::NTPBackgroundImagesService>(
                 GetApplicationContext()->GetVariationsService(),
                 GetApplicationContext()->GetComponentUpdateService(),
                 GetApplicationContext()->GetLocalState())
-                            ads_service:brave_ads::AdsServiceFactoryIOS::
-                                            GetForProfile(_profile)];
+                            ads_service:ads_service];
   }
   return self;
 }
@@ -313,12 +326,14 @@
   return _webImageDownloader;
 }
 
+#if BUILDFLAG(ENABLE_BRAVE_WALLET)
 - (BraveWalletAPI*)braveWalletAPI {
   if (!_braveWalletAPI) {
     _braveWalletAPI = [[BraveWalletAPI alloc] initWithBrowserState:_profile];
   }
   return _braveWalletAPI;
 }
+#endif
 
 - (DefaultHostContentSettings*)defaultHostContentSettings {
   if (!_defaultHostContentSettings) {

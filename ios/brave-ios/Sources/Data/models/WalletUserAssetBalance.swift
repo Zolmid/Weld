@@ -32,6 +32,7 @@ public final class WalletUserAssetBalance: NSManagedObject, CRUD {
     super.init(entity: entity, insertInto: context)
   }
 
+#if !BRAVE_IOS_SLIM
   public init(
     context: NSManagedObjectContext,
     asset: BraveWallet.BlockchainToken,
@@ -206,6 +207,8 @@ public final class WalletUserAssetBalance: NSManagedObject, CRUD {
       }
     }
   }
+#endif
+
 }
 
 extension WalletUserAssetBalance {

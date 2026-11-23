@@ -1,6 +1,10 @@
-![Brave Browser](./docs/images/brave.svg)
+# Weld
 
-# Brave Core
+Weld 是基于 Brave 和 Chromium 开发的轻量浏览器，保留 Shields、常规浏览、默认浏览器提示和必要通知。Weld 精简版关闭 Leo、钱包、Rewards、Brave Ads、VPN 和内置推广。
+
+开发从 [Weld 仓库](https://github.com/Zolmid/Weld) 开始。下文保留 Brave Core 的构建背景与上游出处。
+
+## Brave Core 上游
 
 Brave Core is a set of changes, APIs, and scripts used for customizing Chromium
 to make the Brave browser. Please also check

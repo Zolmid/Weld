@@ -18,6 +18,7 @@ static_library("brave_search_conversion") {
 
   deps = [
     "//base",
+    "//brave/build:promotion_buildflags",
     "//brave/components/brave_origin",
     "//brave/components/brave_origin/buildflags",
     "//brave/components/p3a_utils",

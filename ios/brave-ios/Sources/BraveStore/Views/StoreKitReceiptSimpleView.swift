@@ -180,6 +180,7 @@ public struct StoreKitReceiptSimpleView: View {
 
   private func productName(from bundleId: String) -> String {
     switch bundleId {
+    #if !BRAVE_IOS_SLIM
     case BraveStoreProduct.vpnMonthly.rawValue:
       return Strings.ReceiptViewer.vpnMonthlySubscriptionName
     case BraveStoreProduct.vpnYearly.rawValue:
@@ -188,6 +189,7 @@ public struct StoreKitReceiptSimpleView: View {
       return Strings.ReceiptViewer.leoMonthlySubscriptionName
     case BraveStoreProduct.leoYearly.rawValue:
       return Strings.ReceiptViewer.leoYearlySubscriptionName
+    #endif
     case BraveStoreProduct.originPurchase.rawValue:
       return Strings.ReceiptViewer.originPurchaseName
     default: return bundleId

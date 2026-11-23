@@ -9,7 +9,6 @@
 #include "brave/components/ai_chat/core/common/buildflags/buildflags.h"
 #include "brave/components/brave_origin/features.h"
 #include "brave/components/brave_vpn/common/buildflags/buildflags.h"
-#include "brave/components/brave_vpn/common/features.h"
 #include "brave/components/skus/common/features.h"
 #include "content/public/common/isolated_world_ids.h"
 #include "content/public/test/content_mock_cert_verifier.h"
@@ -17,6 +16,9 @@
 
 #if BUILDFLAG(ENABLE_AI_CHAT)
 #include "brave/components/ai_chat/core/common/features.h"
+#endif
+#if BUILDFLAG(ENABLE_BRAVE_VPN)
+#include "brave/components/brave_vpn/common/features.h"
 #endif
 
 namespace brave_subscription {
@@ -28,7 +30,9 @@ class SubscriptionRenderFrameObserverBrowserTest
     scoped_feature_list_.InitWithFeatures(
         {
             skus::features::kSkusFeature,
+#if BUILDFLAG(ENABLE_BRAVE_VPN)
             brave_vpn::features::kBraveVPN,
+#endif
 #if BUILDFLAG(ENABLE_AI_CHAT)
             ai_chat::features::kAIChat,
 #endif
@@ -61,8 +65,10 @@ TEST_F(SubscriptionRenderFrameObserverBrowserTest, StatusCheck) {
   LoadHTMLWithUrlOverride(R"(<html><body></body></html>)",
                           "https://account.brave.com/order-link/?product=leo");
 
+#if BUILDFLAG(ENABLE_AI_CHAT)
   command =
       u"Number(linkResult != undefined && linkResult.setStatus != undefined)";
+#endif
   EXPECT_TRUE(ExecuteJavascript(command));
 }
 
@@ -81,7 +87,7 @@ TEST_F(SubscriptionRenderFrameObserverBrowserTest, IsAllowed) {
       R"(<html><body></body></html>)",
       "https://account.brave.com/?intent=link-order&product=leo");
 
-  EXPECT_TRUE(observer.IsAllowed());
+  EXPECT_EQ(observer.IsAllowed(), BUILDFLAG(ENABLE_AI_CHAT));
 
   // Origin
   LoadHTMLWithUrlOverride(

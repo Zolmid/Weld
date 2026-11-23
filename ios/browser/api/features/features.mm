@@ -7,7 +7,7 @@
 
 #include "base/memory/raw_ptr.h"
 #include "base/strings/sys_string_conversions.h"
-#include "brave/components/ai_chat/core/common/features.h"
+#include "brave/components/ai_chat/core/common/buildflags/buildflags.h"
 #include "brave/components/brave_component_updater/browser/features.h"
 #include "brave/components/brave_news/common/features.h"
 #include "brave/components/brave_origin/features.h"
@@ -36,6 +36,10 @@
 #import "build/blink_buildflags.h"
 #include "build/build_config.h"
 #include "net/base/features.h"
+
+#if BUILDFLAG(ENABLE_AI_CHAT)
+#include "brave/components/ai_chat/core/common/features.h"
+#endif  // BUILDFLAG(ENABLE_AI_CHAT)
 
 #if BUILDFLAG(ENABLE_BRAVE_WALLET)
 #include "brave/components/brave_wallet/common/features.h"
@@ -79,6 +83,7 @@
 
 // MARK: - Brave Features
 
+#if BUILDFLAG(ENABLE_AI_CHAT)
 + (Feature*)kAIChat {
   return [[Feature alloc] initWithFeature:&ai_chat::features::kAIChat];
 }
@@ -86,6 +91,7 @@
 + (Feature*)kAIChatHistory {
   return [[Feature alloc] initWithFeature:&ai_chat::features::kAIChatHistory];
 }
+#endif  // BUILDFLAG(ENABLE_AI_CHAT)
 
 + (Feature*)kAdblockOverrideRegexDiscardPolicy {
   return

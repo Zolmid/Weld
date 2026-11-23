@@ -47,6 +47,7 @@ public final class WalletUserAsset: NSManagedObject, CRUD {
   // Relationship property
   @NSManaged public var walletUserAssetGroup: WalletUserAssetGroup?
 
+#if !BRAVE_IOS_SLIM
   /// Helper to get the enum value based on the stored optional Int16. If nil, infer value based on `coin`.
   private var splTokenProgramEnumValue: BraveWallet.SPLTokenProgram {
     if let splTokenProgramValue = self.splTokenProgram?.intValue,
@@ -58,10 +59,13 @@ public final class WalletUserAsset: NSManagedObject, CRUD {
     }
   }
 
+#endif
+
   public var id: String {
     contractAddress + chainId + symbol + tokenId
   }
 
+#if !BRAVE_IOS_SLIM
   public var blockchainToken: BraveWallet.BlockchainToken {
     .init(
       contractAddress: self.contractAddress,
@@ -85,6 +89,8 @@ public final class WalletUserAsset: NSManagedObject, CRUD {
     )
   }
 
+#endif
+
   @available(*, unavailable)
   public init() {
     fatalError("No Such Initializer: init()")
@@ -100,6 +106,7 @@ public final class WalletUserAsset: NSManagedObject, CRUD {
     super.init(entity: entity, insertInto: context)
   }
 
+#if !BRAVE_IOS_SLIM
   public init(context: NSManagedObjectContext, asset: BraveWallet.BlockchainToken) {
     let entity = Self.entity(context)
     super.init(entity: entity, insertInto: context)
@@ -124,6 +131,8 @@ public final class WalletUserAsset: NSManagedObject, CRUD {
     // `isDeletedByUser` has a default value `NO`
   }
 
+#endif
+
   public static func getAllUserAssets(
     context: NSManagedObjectContext? = nil
   ) -> [WalletUserAsset] {
@@ -132,6 +141,7 @@ public final class WalletUserAsset: NSManagedObject, CRUD {
     ) ?? []
   }
 
+#if !BRAVE_IOS_SLIM
   public static func getUserAsset(
     token: BraveWallet.BlockchainToken,
     context: NSManagedObjectContext? = nil
@@ -147,6 +157,8 @@ public final class WalletUserAsset: NSManagedObject, CRUD {
       context: context ?? DataController.viewContext
     )
   }
+
+#endif
 
   public static func getAllUserAssets(
     visible: Bool,
@@ -167,6 +179,7 @@ public final class WalletUserAsset: NSManagedObject, CRUD {
     )
   }
 
+#if !BRAVE_IOS_SLIM
   public static func migrateVisibleAssets(
     _ assets: [String: [BraveWallet.BlockchainToken]]
   ) async {
@@ -274,6 +287,8 @@ public final class WalletUserAsset: NSManagedObject, CRUD {
       )
     }
   }
+#endif
+
 }
 
 extension WalletUserAsset {
@@ -296,6 +311,7 @@ extension WalletUserAsset {
   }
 }
 
+#if !BRAVE_IOS_SLIM
 extension BraveWallet.BlockchainToken {
   /// The group id that this token should be stored with in CoreData
   /// - Warning: This format must to updated if
@@ -305,3 +321,4 @@ extension BraveWallet.BlockchainToken {
     "\(coin.rawValue).\(chainId)"
   }
 }
+#endif

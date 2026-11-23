@@ -20,6 +20,7 @@
 #include "brave/browser/ui/webui/new_tab_page/brave_new_tab_message_handler.h"
 #include "brave/browser/ui/webui/new_tab_page/brave_new_tab_page_handler.h"
 #include "brave/browser/ui/webui/new_tab_page/top_sites_message_handler.h"
+#include "brave/build/promotion_buildflags.h"
 #include "brave/components/brave_ads/core/browser/service/ads_service.h"
 #include "brave/components/brave_new_tab/resources/grit/brave_new_tab_generated_map.h"
 #include "brave/components/brave_news/common/buildflags/buildflags.h"
@@ -122,9 +123,10 @@ BraveNewTabUI::BraveNewTabUI(
 
   // Let frontend know about feature flags
 #if BUILDFLAG(ENABLE_BRAVE_NEWS)
-  source->AddBoolean("featureFlagBraveNewsPromptEnabled",
-                     base::FeatureList::IsEnabled(
-                         brave_news::features::kBraveNewsCardPeekFeature));
+  source->AddBoolean(
+      "featureFlagBraveNewsPromptEnabled",
+      base::FeatureList::IsEnabled(brave_news::features::kBraveNewsCardPeekFeature)
+          && BUILDFLAG(ENABLE_BRAVE_PROMOTIONS));
 
   source->AddBoolean(
       "featureFlagBraveNewsFeedV2Enabled",

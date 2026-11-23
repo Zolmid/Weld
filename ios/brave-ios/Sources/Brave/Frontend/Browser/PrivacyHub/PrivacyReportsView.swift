@@ -11,8 +11,6 @@ import SwiftUI
 struct PrivacyReportsView: View {
   @Environment(\.presentationMode) @Binding private var presentationMode
 
-  let lastVPNAlerts: [BraveVPNAlert]?
-
   private(set) var isPrivateBrowsing: Bool
   var isOriginPurchased: Bool
   var onDismiss: (() -> Void)?
@@ -83,21 +81,15 @@ struct PrivacyReportsView: View {
       ScrollView(.vertical) {
         VStack(alignment: .leading, spacing: 16) {
 
+          #if !BRAVE_IOS_SLIM
           if showNotificationPermissionCallout.value && correctAuthStatus && !isOriginPurchased {
             NotificationCalloutView()
           }
+          #endif
 
           PrivacyHubLastWeekSection()
 
           Divider()
-
-          if Preferences.PrivacyReports.captureVPNAlerts.value, let lastVPNAlerts = lastVPNAlerts,
-            !lastVPNAlerts.isEmpty
-          {
-            PrivacyHubVPNAlertsSection(lastVPNAlerts: lastVPNAlerts, onDismiss: dismissView)
-
-            Divider()
-          }
 
           PrivacyHubAllTimeSection(isPrivateBrowsing: isPrivateBrowsing, onDismiss: dismissView)
 
@@ -147,11 +139,11 @@ struct PrivacyReports_Previews: PreviewProvider {
   static var previews: some View {
 
     Group {
-      PrivacyReportsView(lastVPNAlerts: nil, isPrivateBrowsing: false, isOriginPurchased: false)
+      PrivacyReportsView(isPrivateBrowsing: false, isOriginPurchased: false)
 
-      PrivacyReportsView(lastVPNAlerts: nil, isPrivateBrowsing: false, isOriginPurchased: true)
+      PrivacyReportsView(isPrivateBrowsing: false, isOriginPurchased: true)
 
-      PrivacyReportsView(lastVPNAlerts: nil, isPrivateBrowsing: false, isOriginPurchased: false)
+      PrivacyReportsView(isPrivateBrowsing: false, isOriginPurchased: false)
         .preferredColorScheme(.dark)
     }
   }

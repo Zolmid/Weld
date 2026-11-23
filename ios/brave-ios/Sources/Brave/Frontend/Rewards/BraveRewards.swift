@@ -13,6 +13,14 @@ import Preferences
 import Shared
 import Web
 
+#if BRAVE_IOS_SLIM
+/// Keeps shared browser initializers independent of optional feature types.
+public final class BraveRewards {
+  public init() {}
+
+  public static func isSupported(prefService: any PrefService) -> Bool { false }
+}
+#else
 public class BraveRewards: PreferencesObserver {
 
   /// Whether or not Brave Rewards is available/can be enabled
@@ -333,3 +341,4 @@ extension BraveRewards {
     }
   }
 }
+#endif

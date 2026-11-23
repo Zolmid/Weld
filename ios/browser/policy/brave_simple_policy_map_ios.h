@@ -6,12 +6,12 @@
 #ifndef BRAVE_IOS_BROWSER_POLICY_BRAVE_SIMPLE_POLICY_MAP_IOS_H_
 #define BRAVE_IOS_BROWSER_POLICY_BRAVE_SIMPLE_POLICY_MAP_IOS_H_
 
-#include "brave/components/ai_chat/core/common/pref_names.h"
+#include "brave/components/ai_chat/core/common/buildflags/buildflags.h"
 #include "brave/components/brave_news/common/pref_names.h"
 #include "brave/components/brave_rewards/core/pref_names.h"
 #include "brave/components/brave_talk/buildflags/buildflags.h"
 #include "brave/components/brave_vpn/common/buildflags/buildflags.h"
-#include "brave/components/brave_wallet/browser/pref_names.h"
+#include "brave/components/brave_wallet/common/buildflags/buildflags.h"
 #include "brave/components/constants/pref_names.h"
 #include "brave/components/email_aliases/buildflags/buildflags.h"
 #include "brave/components/p3a/pref_names.h"
@@ -19,6 +19,14 @@
 #include "build/build_config.h"
 #include "components/policy/core/browser/configuration_policy_handler.h"
 #include "components/policy/policy_constants.h"
+
+#if BUILDFLAG(ENABLE_AI_CHAT)
+#include "brave/components/ai_chat/core/common/pref_names.h"
+#endif  // BUILDFLAG(ENABLE_AI_CHAT)
+
+#if BUILDFLAG(ENABLE_BRAVE_WALLET)
+#include "brave/components/brave_wallet/browser/pref_names.h"
+#endif  // BUILDFLAG(ENABLE_BRAVE_WALLET)
 
 #if BUILDFLAG(ENABLE_BRAVE_TALK)
 #include "brave/components/brave_talk/pref_names.h"
@@ -35,16 +43,20 @@
 namespace policy {
 
 inline constexpr PolicyToPreferenceMapEntry kBraveSimplePolicyMap[] = {
+#if BUILDFLAG(ENABLE_BRAVE_WALLET)
     {
         policy::key::kBraveWalletDisabled,
         brave_wallet::kBraveWalletDisabledByPolicy,
         base::Value::Type::BOOLEAN,
     },
+#endif  // BUILDFLAG(ENABLE_BRAVE_WALLET)
+#if BUILDFLAG(ENABLE_AI_CHAT)
     {
         policy::key::kBraveAIChatEnabled,
         ai_chat::prefs::kEnabledByPolicy,
         base::Value::Type::BOOLEAN,
     },
+#endif  // BUILDFLAG(ENABLE_AI_CHAT)
     {
         policy::key::kBraveRewardsDisabled,
         brave_rewards::prefs::kDisabledByPolicy,

@@ -8,7 +8,6 @@ import Brave
 import BraveCore
 import BraveNews
 import BraveShared
-import BraveVPN
 import BraveWidgetsModels
 import BrowserIntentsModels
 import Combine
@@ -59,10 +58,14 @@ struct ProfileState {
       )
     )
 
+    #if BRAVE_IOS_SLIM
+    rewards = BraveRewards()
+    #else
     // Setup Rewards & Ads
     let configuration = BraveRewards.Configuration.current()
     Migration.migrateAdsConfirmations(for: configuration)
     rewards = BraveRewards(configuration: configuration)
+    #endif
 
     // Setup BraveCore profile migrations
     migrations = BraveProfileMigrations(profileController: profileController)
@@ -219,10 +222,6 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     Preferences.AppState.shouldDeferPromotedPurchase.value = false
     scene.userActivity?.resignCurrent()
     AppState.shared.uptimeMonitor.pauseMonitoring()
-  }
-
-  func sceneDidEnterBackground(_ scene: UIScene) {
-    BraveVPN.sendVPNWorksInBackgroundNotification()
   }
 
   func scene(_ scene: UIScene, openURLContexts contexts: Set<UIOpenURLContext>) {
@@ -468,7 +467,6 @@ extension SceneDelegate {
     PrivacyReportsManager.scheduleProcessingBlockedRequests(
       isPrivateBrowsing: browserViewController.privateBrowsingManager.isPrivateBrowsing
     )
-    PrivacyReportsManager.scheduleVPNAlertsTask()
 
     // Handle Custom Activity and Intents
     if let currentActivity = sceneState.connectionOptions.userActivities.first {
@@ -482,6 +480,10 @@ extension SceneDelegate {
       )
     }
 
+    #if DEBUG && targetEnvironment(simulator)
+    openSimulatorSmokeTestPage(in: browserViewController)
+    #endif
+
     if sceneState.windowScene.activationState == .foregroundActive {
       // Perform any actions that would also execute in sceneDidBecomeActive
       Preferences.AppState.backgroundedCleanly.value = false
@@ -490,6 +492,23 @@ extension SceneDelegate {
       handleQuickActionsIfNeeded(browserViewController: browserViewController)
     }
   }
+
+  #if DEBUG && targetEnvironment(simulator)
+  /// Lets an isolated simulator launch test exercise the normal browser URL path.
+  private func openSimulatorSmokeTestPage(in browserViewController: BrowserViewController) {
+    let arguments = ProcessInfo.processInfo.arguments
+    guard let index = arguments.firstIndex(of: "--brave-smoke-url"),
+      arguments.indices.contains(index + 1),
+      let components = URLComponents(string: arguments[index + 1]),
+      components.scheme == "http", components.host == "127.0.0.1",
+      components.user == nil, components.password == nil,
+      let port = components.port, (1024...65535).contains(port),
+      let url = components.url
+    else { return }
+
+    browserViewController.handleNavigationPath(path: .url(webURL: url, isPrivate: false))
+  }
+  #endif
 
   private func handleQuickActionsIfNeeded(browserViewController: BrowserViewController) {
     // handle quick actions is available
@@ -611,15 +630,6 @@ extension SceneDelegate {
       }
 
       return
-    case ActivityType.enableBraveVPN.identifier:
-      if let browserViewController = scene.browserViewController {
-        ActivityShortcutManager.shared.performShortcutActivity(
-          type: .enableBraveVPN,
-          using: browserViewController
-        )
-      }
-
-      return
     case ActivityType.openBraveNews.identifier:
       let isNewsAvailable =
         AppState.shared.braveCore.profileController?.profile.prefs.isBraveNewsAvailable ?? true
@@ -654,7 +664,6 @@ extension SceneDelegate {
     if let url = userActivity.webpageURL {
       switch UniversalLinkManager.universalLinkType(for: url, checkPath: false) {
       case .buyVPN:
-        scene.browserViewController?.presentCorrespondingVPNViewController()
         return
       case .none:
         break

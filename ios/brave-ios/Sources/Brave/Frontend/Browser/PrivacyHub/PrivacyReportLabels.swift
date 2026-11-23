@@ -20,25 +20,6 @@ extension PrivacyReportsView {
     }
   }
 
-  struct BlockedByVPNLabel: View {
-    @Environment(\.sizeCategory) private var sizeCategory
-
-    var body: some View {
-      Text(Strings.PrivacyHub.vpnLabel.uppercased())
-        .foregroundColor(Color("label_violet_foreground", bundle: .module))
-        .padding(.horizontal, 4)
-        .padding(.vertical, 2)
-        .background(Color("label_violet_background", bundle: .module))
-        .clipShape(
-          RoundedRectangle(
-            cornerRadius: sizeCategory.isAccessibilityCategory ? 8.0 : 24.0,
-            style: .continuous
-          )
-        )
-        .fixedSize(horizontal: false, vertical: true)
-    }
-  }
-
   struct BlockedByShieldsLabel: View {
     @Environment(\.sizeCategory) private var sizeCategory
 
@@ -64,12 +45,10 @@ struct PrivacyReportLabels_Previews: PreviewProvider {
   static var previews: some View {
     Group {
       PrivacyReportsView.BlockedLabel()
-      PrivacyReportsView.BlockedByVPNLabel()
       PrivacyReportsView.BlockedByShieldsLabel()
 
       Group {
         PrivacyReportsView.BlockedLabel()
-        PrivacyReportsView.BlockedByVPNLabel()
         PrivacyReportsView.BlockedByShieldsLabel()
       }
       .preferredColorScheme(.dark)

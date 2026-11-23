@@ -5,7 +5,6 @@
 import BraveCore
 import BraveShared
 import BraveUI
-import BraveWallet
 import Data
 import Shared
 import UIKit

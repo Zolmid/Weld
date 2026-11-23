@@ -10,7 +10,8 @@
 # $RUN_CLANG_STATIC_ANALYZER is NO for builds, YES for cleans
 if [[ $RUN_CLANG_STATIC_ANALYZER = "NO" ]]; then
   # Do not inject Xcode build configs into the GN build
-  env -i PATH="$PATH" python3 \
+  env -i PATH="$PATH" BRAVE_IOS_PREBUILT_CORE_DIR="${BRAVE_IOS_PREBUILT_CORE_DIR:-}" \
+    BRAVE_IOS_SLIM="${BRAVE_IOS_SLIM:-0}" BRAVE_IOS_REQUIRE_SELECTED_CORE=1 python3 \
     "${PROJECT_DIR}/../scripts/scheme_preaction.py" \
     --platform_name "$PLATFORM_NAME" \
     "$@"

@@ -75,12 +75,26 @@ public class OnboardingStepAdapterTest {
     private OnboardingStepAdapter createAdapter(
             final String dayZeroVariant, final boolean skipMakeBraveBetter) {
         return new OnboardingStepAdapter(
-                mWdpLearnMore, dayZeroVariant, skipMakeBraveBetter, mPageBounceAnimator, mListener);
+                mWdpLearnMore,
+                dayZeroVariant,
+                skipMakeBraveBetter,
+                true,
+                mPageBounceAnimator,
+                mListener);
     }
 
     private OnboardingStepAdapter.OnboardingBaseViewHolder createViewHolder(
             final OnboardingStepAdapter adapter, final int position) {
         return adapter.onCreateViewHolder(mParent, adapter.getItemViewType(position));
+    }
+
+    @Test
+    public void testPromotionsDisabledKeepsStartBrowsingStep() {
+        OnboardingStepAdapter adapter =
+                new OnboardingStepAdapter(
+                        mWdpLearnMore, DAY_ZERO_VARIANT_Y, true, false, mPageBounceAnimator, mListener);
+        assertEquals(1, adapter.getItemCount());
+        assertEquals(R.layout.make_brave_better, adapter.getItemViewType(0));
     }
 
     @Test

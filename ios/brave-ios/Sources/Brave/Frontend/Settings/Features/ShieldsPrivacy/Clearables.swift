@@ -246,6 +246,7 @@ class RecentSearchClearable: Clearable {
   }
 }
 
+#if !BRAVE_IOS_SLIM
 class BraveAdsDataClearable: Clearable {
 
   private let rewards: BraveRewards?
@@ -262,3 +263,4 @@ class BraveAdsDataClearable: Clearable {
     await rewards?.clearAdsData()
   }
 }
+#endif

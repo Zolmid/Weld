@@ -183,7 +183,9 @@ public class WelcomeOnboardingActivity extends FirstRunActivityBase
 
     private void finalStep() {
         ChromeSharedPreferences.getInstance()
-                .writeBoolean(OnboardingPrefManager.SHOULD_SHOW_SEARCH_WIDGET_PROMO, true);
+                .writeBoolean(
+                        OnboardingPrefManager.SHOULD_SHOW_SEARCH_WIDGET_PROMO,
+                        BraveConfig.ENABLE_PROMOTIONS);
         CustomizeBraveMenu.initDefaultInvisibleItems(getResources());
         OnboardingPrefManager.getInstance().setP3aOnboardingShown(true);
 
@@ -290,7 +292,9 @@ public class WelcomeOnboardingActivity extends FirstRunActivityBase
         // splash container, and it is what tells the two splash treatments apart.
         mBraveSplashContainer = findViewById(R.id.brave_splash_container);
 
-        checkReferral();
+        if (BraveConfig.ENABLE_PROMOTIONS) {
+            checkReferral();
+        }
         if (PackageUtils.isFirstInstall(this)) {
             ChromeSharedPreferences.getInstance()
                     .writeBoolean(
@@ -317,6 +321,7 @@ public class WelcomeOnboardingActivity extends FirstRunActivityBase
                         mWdpLearnMore,
                         dayZeroVariant,
                         skipMakeBraveBetter,
+                        BraveConfig.ENABLE_PROMOTIONS,
                         mPageBounceAnimator,
                         this);
         mOnboardingPager.setAdapter(stepAdapter);
@@ -444,7 +449,8 @@ public class WelcomeOnboardingActivity extends FirstRunActivityBase
     }
 
     private void showPagerAfterSplash() {
-        mOnboardingPager.setCurrentItem(isWDPSettingAvailable() ? 0 : 1, false);
+        mOnboardingPager.setCurrentItem(
+                BraveConfig.ENABLE_PROMOTIONS && !isWDPSettingAvailable() ? 1 : 0, false);
         mOnboardingPager.setVisibility(View.VISIBLE);
         mSplashAnimationFinished = true;
         maybeRequestDefaultBrowser();

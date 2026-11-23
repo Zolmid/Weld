@@ -1,0 +1,11 @@
+diff --git a/components/feature_engagement/internal/BUILD.gn b/components/feature_engagement/internal/BUILD.gn
+--- a/components/feature_engagement/internal/BUILD.gn
++++ b/components/feature_engagement/internal/BUILD.gn
+@@ -89,6 +89,7 @@
+   ]
+ 
+   deps = [
++    "//brave/build:promotion_buildflags",
+     "//components/feature_engagement/public",
+     "//components/feature_engagement/public:prefs",
+     "//components/keyed_service/core",

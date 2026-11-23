@@ -1,0 +1,37 @@
+version = 1
+name = "Brave local development"
+
+[setup]
+script = '''
+echo "Brave uses a nested Chromium checkout. Read LOCAL-SETUP.md before initializing a new worktree."
+'''
+
+[[actions]]
+name = "Check local tools"
+icon = "test"
+command = "bash .codex/run check"
+platform = "darwin"
+
+[[actions]]
+name = "Sync macOS and iOS dependencies"
+icon = "tool"
+command = "bash .codex/run sync-apple"
+platform = "darwin"
+
+[[actions]]
+name = "Build macOS arm64"
+icon = "run"
+command = "bash .codex/run build-mac"
+platform = "darwin"
+
+[[actions]]
+name = "Build iOS Simulator core"
+icon = "run"
+command = "bash .codex/run build-ios"
+platform = "darwin"
+
+[[actions]]
+name = "Open iOS Xcode project"
+icon = "debug"
+command = "bash .codex/run open-ios"
+platform = "darwin"

@@ -30,9 +30,13 @@ public class BraveProfileMigrations {
     migrateGPCPreference()
     migrateMediaBackgroundingPreference()
     migrateBlockAllCookiesPreference()
+    #if !BRAVE_IOS_SLIM
     migrateDefaultWalletPreferences()
+    #endif
     migrateShowNewFavoritesPreference()
+    #if !BRAVE_IOS_SLIM
     migrateSponsoredAdsEnabledPreference()
+    #endif
     migrateHTTPSUpgradeLevelPreference()
   }
 
@@ -149,6 +153,7 @@ public class BraveProfileMigrations {
     }
   }
 
+#if !BRAVE_IOS_SLIM
   private func migrateDefaultWalletPreferences() {
     // iOS only ever exposed `none` and `brave` (`WalletType`) as options, which
     // map onto the `DefaultWallet` values stored in the `PrefService`.
@@ -176,6 +181,8 @@ public class BraveProfileMigrations {
     }
   }
 
+#endif
+
   private func migrateShowNewFavoritesPreference() {
     Preferences.NewTabPage.showNewTabFavourites.migrate { value in
       if value {
@@ -187,6 +194,7 @@ public class BraveProfileMigrations {
     }
   }
 
+  #if !BRAVE_IOS_SLIM
   /// Migrates deprecated `backgroundMediaTypeRaw` to `kBraveAdsSponsoredEnabledPrefName`.
   /// Must run after `Preferences.migrateBackgroundSponsoredImages()`, which
   /// migrates `backgroundMediaTypeRaw` from the older
@@ -199,6 +207,7 @@ public class BraveProfileMigrations {
       )
     }
   }
+  #endif
 
   static func isSponsoredAdsEnabled(forBackgroundMediaTypeRawValue rawValue: Int) -> Bool {
     rawValue != DeprecatedBackgroundMediaType.defaultImages.rawValue
@@ -214,7 +223,9 @@ public class BraveLocalStateMigration {
   public func launchMigrations() {
     migrateDAUPingPreference()
     migrateDAULastLaunchInfoPreference()
+    #if !BRAVE_IOS_SLIM
     migrateAdsPreferences()
+    #endif
   }
 
   private func migrateDAUPingPreference() {
@@ -236,6 +247,7 @@ public class BraveLocalStateMigration {
     }
   }
 
+  #if !BRAVE_IOS_SLIM
   private func migrateAdsPreferences() {
     guard !localState.hasPref(forPath: kBraveAdsFirstRunAtPrefName) else { return }
 
@@ -247,6 +259,7 @@ public class BraveLocalStateMigration {
     let firstRunAt = installationDate ?? Date()
     localState.set(firstRunAt, forPath: kBraveAdsFirstRunAtPrefName)
   }
+  #endif
 }
 
 public class Migration {
@@ -255,7 +268,9 @@ public class Migration {
 
   public func launchMigrations(keyPrefix: String) {
     Preferences.migratePreferences(keyPrefix: keyPrefix)
+    #if !BRAVE_IOS_SLIM
     Preferences.migrateWalletPreferences()
+    #endif
     Preferences.migrateAdAndTrackingProtection()
     Preferences.migrateHTTPSUpgradeLevel()
     Preferences.migrateBackgroundSponsoredImages()
@@ -325,6 +340,7 @@ public class Migration {
     Preferences.Migration.lostTabsWindowIDMigration.value = true
   }
 
+  #if !BRAVE_IOS_SLIM
   public static func migrateAdsConfirmations(for configuration: BraveRewards.Configuration) {
     // To ensure after a user launches 1.21 that their ads confirmations, viewed count and
     // estimated payout remain correct.
@@ -357,6 +373,7 @@ public class Migration {
       )
     }
   }
+  #endif
 }
 
 extension Migration {
@@ -713,6 +730,7 @@ extension Preferences {
     Migration.adBlockAndTrackingProtectionShieldLevelCompleted.value = true
   }
 
+#if !BRAVE_IOS_SLIM
   /// Migrate Wallet Preferences from version <1.43
   fileprivate class func migrateWalletPreferences() {
     guard Preferences.Migration.walletProviderAccountRequestCompleted.value != true else { return }
@@ -726,6 +744,8 @@ extension Preferences {
 
     Preferences.Migration.walletProviderAccountRequestCompleted.value = true
   }
+
+#endif
 
   fileprivate class func migrateBackgroundSponsoredImages() {
     guard !Migration.backgroundSponsoredImagesCompleted.value else { return }

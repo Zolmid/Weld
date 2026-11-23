@@ -4,7 +4,9 @@
 
 import BraveCore
 import BraveShields
+#if !BRAVE_IOS_SLIM
 import BraveWallet
+#endif
 import CoreData
 import Data
 import Favicon
@@ -421,6 +423,7 @@ class TabManager: NSObject {
       SessionTab.touch(tabId: tabID)
     }
 
+    #if !BRAVE_IOS_SLIM
     guard let newSelectedTab = tab, let previousTab = previous,
       let newTabUrl = newSelectedTab.visibleURL
     else { return }
@@ -444,6 +447,7 @@ class TabManager: NSObject {
         isPrivate: newSelectedTab.isPrivate
       )
     }
+    #endif
   }
 
   // Called by other classes to signal that they are entering/exiting private mode
@@ -1827,6 +1831,7 @@ extension TabManager: NSFetchedResultsControllerDelegate {
     for type: NSFetchedResultsChangeType,
     newIndexPath: IndexPath?
   ) {
+    #if !BRAVE_IOS_SLIM
     if let domain = anObject as? Domain, let domainURL = domain.url {
       // if `wallet_permittedAccounts` changes on a `Domain` from
       // wallet settings / manage web3 site connections, we need to
@@ -1858,6 +1863,7 @@ extension TabManager: NSFetchedResultsControllerDelegate {
         }
       }
     }
+    #endif
   }
 }
 

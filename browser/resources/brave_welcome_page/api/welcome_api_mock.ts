@@ -277,6 +277,7 @@ export function createWelcomeApiMock(): WelcomeApi {
         onImportStatusChange = fn
       },
     },
+    promotionsEnabled: true,
     isCrashReportingPrefManaged: false,
     isP3APrefManaged: false,
     isWebDiscoveryPrefManaged: false,

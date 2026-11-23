@@ -7,6 +7,8 @@ import PackageDescription
 // News, Playlist (+JS), Onboarding, Browser (Favicons, Bookmarks, History, Passwords, Reader Mode, Settings, Sync),
 // VPN, Rewards, Shields (Privacy, De-Amp, Downloaders, Content Blockers, ...), NTP, Networking,
 
+let isSlim = ProcessInfo.processInfo.environment["BRAVE_IOS_SLIM"] == "1"
+
 var package = Package(
   name: "Brave",
   defaultLocalization: "en",
@@ -29,7 +31,6 @@ var package = Package(
     .library(name: "BraveWidgetsModels", targets: ["BraveWidgetsModels"]),
     .library(name: "Strings", targets: ["Strings"]),
     .library(name: "BraveStrings", targets: ["BraveStrings"]),
-    .library(name: "BraveVPN", targets: ["BraveVPN"]),
     .library(name: "BraveNews", targets: ["BraveNews"]),
     .library(name: "AIChat", targets: ["AIChat"]),
     .library(name: "BraveStore", targets: ["BraveStore"]),
@@ -40,7 +41,6 @@ var package = Package(
     .library(name: "Growth", targets: ["Growth"]),
     .library(name: "RuntimeWarnings", targets: ["RuntimeWarnings"]),
     .library(name: "CodableHelpers", targets: ["CodableHelpers"]),
-    .library(name: "GRDWireGuardKit", targets: ["GRDWireGuardKit"]),
     .library(name: "Preferences", targets: ["Preferences"]),
     .library(name: "PrivateCDN", targets: ["PrivateCDN"]),
     .library(name: "CertificateUtilities", targets: ["CertificateUtilities"]),
@@ -67,7 +67,6 @@ var package = Package(
     .package(url: "https://github.com/apple/swift-algorithms", from: "1.0.0"),
     .package(url: "https://github.com/devxoul/Then", from: "2.7.0"),
     .package(name: "Swift-BigInt", path: "../third_party/swift-bigint"),
-    .package(url: "https://github.com/GuardianFirewall/GuardianConnect", exact: "2.1.1"),
     .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "0.6.0"),
     .package(
       url: "https://github.com/venmo/Static",
@@ -81,7 +80,6 @@ var package = Package(
       dependencies: [
         "BraveShared",
         "Shared",
-        "BraveWallet",
         "BraveCore",
         "PartitionAllocSupport",
         "BraveUI",
@@ -95,9 +93,7 @@ var package = Package(
         "Then",
         "BrowserIntentsModels",
         "BraveWidgetsModels",
-        "BraveVPN",
         "BraveNews",
-        "AIChat",
         "BraveStore",
         "Onboarding",
         "Growth",
@@ -116,11 +112,17 @@ var package = Package(
         "BraveShields",
         "BraveTalk",
         "Origin",
-      ],
+      ] + (isSlim ? [] : ["BraveWallet", "AIChat"]),
       exclude: [
         "Frontend/UserContent/UserScripts/AllFrames",
         "Frontend/UserContent/UserScripts/MainFrame",
         "Frontend/UserContent/UserScripts/Sandboxed",
+        "BraveSkus/BraveSkusWebHelper.swift",
+        "Frontend/Browser/BrowserViewController/BVC+VPN.swift",
+        "Frontend/Browser/PrivacyHub/AllVPNAlertsView.swift",
+        "Frontend/Browser/PrivacyHub/PrivacyHubVPNAlertsSection.swift",
+        "Frontend/Browser/PrivacyHub/VPNAlertCell.swift",
+        "Frontend/Settings/Debug/VPNLogsViewController.swift",
       ],
       resources: [
         .copy("Assets/About/AboutHome.html"),
@@ -262,7 +264,7 @@ var package = Package(
     .target(
       name: "Growth",
       dependencies: [
-        "BraveVPN", "Shared", "BraveShared", "Strings", "SnapKit", "CertificateUtilities",
+        "Shared", "BraveShared", "BraveUI", "Strings", "SnapKit", "CertificateUtilities",
         .product(name: "OrderedCollections", package: "swift-collections"),
       ],
       plugins: ["LoggerPlugin"]
@@ -319,10 +321,6 @@ var package = Package(
       path: "../../../out/ios_current_link/PartitionAllocSupport.xcframework"
     ),
     .binaryTarget(name: "BraveCore", path: "../../../out/ios_current_link/BraveCore.xcframework"),
-    .binaryTarget(
-      name: "GRDWireGuardKit",
-      path: "../third_party/GRDWireGuardKit/GRDWireGuardKit.xcframework"
-    ),
     .target(
       name: "Data",
       dependencies: ["BraveShared", "Strings", "Preferences", "Shared"],
@@ -384,22 +382,6 @@ var package = Package(
       plugins: ["IntentBuilderPlugin", "LoggerPlugin"]
     ),
     .target(name: "TestHelpers", dependencies: ["Data", "BraveShared"]),
-    .target(
-      name: "BraveVPN",
-      dependencies: [
-        "BraveCore",
-        "BraveStore",
-        "BraveStrings",
-        "SnapKit",
-        "Then",
-        "Data",
-        "GuardianConnect",
-        "BraveUI",
-        .product(name: "Lottie", package: "lottie-spm"),
-      ],
-      resources: [.copy("Resources/vpncheckmark.json")],
-      plugins: ["LoggerPlugin"]
-    ),
     .target(
       name: "BraveNews",
       dependencies: [
@@ -471,6 +453,7 @@ var package = Package(
         "Shared",
         "SnapKit",
       ],
+      exclude: ["VPNNotifications"],
       resources: [
         .copy("LottieAssets/onboarding-rewards.json"),
         .copy("LottieAssets/playlist-confetti.json"),
@@ -516,10 +499,6 @@ var package = Package(
       dependencies: ["BraveShared", "Preferences"]
     ),
     .testTarget(
-      name: "BraveVPNTests",
-      dependencies: ["BraveVPN", "BraveShared", "GuardianConnect"]
-    ),
-    .testTarget(
       name: "BraveWalletTests",
       dependencies: [
         "BraveWallet",
@@ -531,6 +510,7 @@ var package = Package(
     .testTarget(
       name: "ClientTests",
       dependencies: ["Brave", "BraveStrings", "TestHelpers", "Web"],
+      exclude: ["Helpers/BraveSkusWebHelperTests.swift"],
       resources: [
         .copy("Resources/debouncing.json"),
         .copy("Resources/content-blocking.json"),
@@ -559,7 +539,7 @@ var package = Package(
     .testTarget(name: "PrivateCDNTests", dependencies: ["PrivateCDN"]),
     .testTarget(
       name: "GrowthTests",
-      dependencies: ["Growth", "Shared", "BraveShared", "BraveVPN"]
+      dependencies: ["Growth", "Shared", "BraveShared"]
     ),
     .target(
       name: "PlaylistUI",
@@ -578,9 +558,9 @@ var package = Package(
     .target(
       name: "BrowserMenu",
       dependencies: [
-        "DesignSystem", "BraveUI", "Preferences", "Strings", "BraveStrings", "BraveVPN",
-        "GuardianConnect", "BraveWallet", "BraveShields",
-      ]
+        "DesignSystem", "BraveUI", "Preferences", "Strings", "BraveStrings",
+        "BraveShields",
+      ] + (isSlim ? [] : ["BraveWallet"])
     ),
     .target(
       name: "Web",
@@ -638,6 +618,9 @@ let isStripAbsolutePathsFromDebugSymbolsEnabled = {
 
 for target in package.targets where target.type == .regular || target.type == .test {
   var settings = target.swiftSettings ?? []
+  if isSlim {
+    settings.append(.define("BRAVE_IOS_SLIM"))
+  }
   if isStripAbsolutePathsFromDebugSymbolsEnabled {
     settings.append(
       .unsafeFlags(

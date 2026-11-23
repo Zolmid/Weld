@@ -61,6 +61,7 @@ import org.chromium.build.annotations.Initializer;
 import org.chromium.build.annotations.NullMarked;
 import org.chromium.build.annotations.Nullable;
 import org.chromium.chrome.R;
+import org.chromium.chrome.browser.BraveConfig;
 import org.chromium.chrome.browser.app.BraveActivity;
 import org.chromium.chrome.browser.brave_news.BraveNewsControllerFactory;
 import org.chromium.chrome.browser.brave_news.BraveNewsUtils;
@@ -239,11 +240,14 @@ public class BraveNewTabPageLayout extends NewTabPageLayout
         getAndShowNTPImage();
 
         if (OnboardingPrefManager.getInstance().isFromNotification()) {
-            ((BraveActivity) mActivity).showOnboardingV2(false);
+            if (BraveConfig.ENABLE_PROMOTIONS) {
+                ((BraveActivity) mActivity).showOnboardingV2(false);
+            }
             OnboardingPrefManager.getInstance().setFromNotification(false);
         }
 
-        mIsDisplayNewsOptin = BraveNewsUtils.shouldDisplayNewsOptin(mProfile);
+        mIsDisplayNewsOptin =
+                BraveConfig.ENABLE_PROMOTIONS && BraveNewsUtils.shouldDisplayNewsOptin(mProfile);
         mIsDisplayNewsFeed = BraveNewsUtils.shouldDisplayNewsFeed(mProfile);
 
         initPreferenceObserver();
@@ -1311,7 +1315,9 @@ public class BraveNewTabPageLayout extends NewTabPageLayout
      * when app was returned from background after inactivity threshold.
      */
     private void maybeShowRecentTabsDialog() {
-        if (!BraveFreshNtpHelper.isEnabled() || !BraveFreshNtpHelper.getVariant().equals("B")) {
+        if (!BraveConfig.ENABLE_PROMOTIONS
+                || !BraveFreshNtpHelper.isEnabled()
+                || !BraveFreshNtpHelper.getVariant().equals("B")) {
             return;
         }
 

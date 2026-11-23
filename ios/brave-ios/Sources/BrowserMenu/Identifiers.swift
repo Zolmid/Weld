@@ -4,7 +4,9 @@
 // You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import BraveShields
+#if !BRAVE_IOS_SLIM
 import BraveWallet
+#endif
 import Foundation
 
 /// The list of action identifiers
@@ -29,14 +31,6 @@ import Foundation
 /// Default visibility controls whether or not the item appears on the menu without the user tapping
 /// "Show All…" to display all actions or explicitly adding it to the menu themselves.
 extension Action.Identifier {
-
-  public static let vpn: Self = .init(
-    id: "ToggleVPN",
-    title: Strings.ActionTitles.vpn,
-    braveSystemImage: "leo.product.vpn",
-    defaultRank: 100,
-    defaultVisibility: .visible
-  )
 
   public static let bookmarks: Self = .init(
     id: "Bookmarks",
@@ -86,6 +80,7 @@ extension Action.Identifier {
     defaultVisibility: .hidden
   )
 
+  #if !BRAVE_IOS_SLIM
   public static let braveWallet: Self = .init(
     id: "BraveWallet",
     title: Strings.Wallet.wallet,
@@ -93,6 +88,7 @@ extension Action.Identifier {
     defaultRank: 900,
     defaultVisibility: .visible
   )
+  #endif
 
   public static let playlist: Self = .init(
     id: "Playlist",

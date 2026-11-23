@@ -8,6 +8,7 @@ import Foundation
 import Shared
 import UIKit
 
+#if !BRAVE_IOS_SLIM
 extension BraveAds {
   public func initialize(
     walletInfo: BraveAds.WalletInfo? = nil,
@@ -33,3 +34,4 @@ extension BraveAds {
     }
   }
 }
+#endif

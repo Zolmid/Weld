@@ -3,12 +3,16 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+#if !BRAVE_IOS_SLIM
 import AIChat
+#endif
 import BraveCore
 import BraveShared
 import BraveShields
 import BraveUI
+#if !BRAVE_IOS_SLIM
 import BraveWallet
+#endif
 import Data
 import Foundation
 import Preferences
@@ -43,6 +47,7 @@ extension BrowserViewController: TabManagerDelegate {
     tab.shareableDocumentHelper = .init(tab: tab)
     tab.externalAppURLHelper = .init(tab: tab, browserViewController: self)
     tab.forcePaste = .init(tab: tab)
+    #if !BRAVE_IOS_SLIM
     tab.aiChatWebUIHelper = .init(
       tab: tab,
       webDelegate: tab.leoTabHelper,
@@ -91,6 +96,7 @@ extension BrowserViewController: TabManagerDelegate {
         self?.scanAddressQRCode(completion: completion)
       }
     )
+    #endif
     let braveShieldsHelper: BraveShieldsTabHelper = .init(
       tab: tab,
       braveShieldsSettings: BraveShieldsSettingsServiceFactory.get(profile: tab.profile)
@@ -351,6 +357,7 @@ extension BrowserViewController: TabManagerDelegate {
     updateScreenTimeUrl(tabManager.selectedTab?.visibleURL)
     updateInContentHomePanel(selected?.visibleURL as URL?)
 
+    #if !BRAVE_IOS_SLIM
     removeWalletNotificationAndClearOrigin()
     let dappSupportedCoins = Array(WalletConstants.supportedCoinTypes(.dapps))
     WalletProviderPermissionRequestsManager.shared.cancelAllPendingRequests(
@@ -360,6 +367,7 @@ extension BrowserViewController: TabManagerDelegate {
       coins: dappSupportedCoins
     )
     updateURLBarWalletButton()
+    #endif
 
     if #available(iOS 26.0, *) {
       if let topEdgeInteraction {
@@ -388,7 +396,9 @@ extension BrowserViewController: TabManagerDelegate {
 
     SnackBarTabHelper.from(tab: tab)?.delegate = self
 
+    #if !BRAVE_IOS_SLIM
     tab.wallet?.walletKeyringService = BraveWallet.KeyringServiceFactory.get(profile: tab.profile)
+    #endif
     updateTabsBarVisibility()
   }
 

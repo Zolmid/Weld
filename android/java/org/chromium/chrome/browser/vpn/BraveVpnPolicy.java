@@ -7,6 +7,7 @@ package org.chromium.chrome.browser.vpn;
 
 import org.chromium.build.annotations.NullMarked;
 import org.chromium.build.annotations.Nullable;
+import org.chromium.chrome.browser.BraveConfig;
 import org.chromium.chrome.browser.preferences.BravePref;
 import org.chromium.chrome.browser.profiles.Profile;
 import org.chromium.components.prefs.PrefService;
@@ -15,8 +16,11 @@ import org.chromium.components.user_prefs.UserPrefs;
 /** Provides policy state for Brave VPN. */
 @NullMarked
 public class BraveVpnPolicy {
-    /** Returns true if VPN is disabled by policy for the given profile. */
+    /** Returns true if VPN is unavailable in this build or disabled by policy. */
     public static boolean isDisabledByPolicy(@Nullable Profile profile) {
+        if (!BraveConfig.ENABLE_VPN) {
+            return true;
+        }
         if (profile == null) {
             return false;
         }

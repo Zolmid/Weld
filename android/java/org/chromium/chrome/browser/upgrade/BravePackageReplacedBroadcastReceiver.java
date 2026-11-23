@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 
 import org.chromium.base.BravePreferenceKeys;
+import org.chromium.chrome.browser.BraveConfig;
 import org.chromium.chrome.browser.BraveConstants;
 import org.chromium.chrome.browser.notifications.retention.RetentionNotificationUtil;
 import org.chromium.chrome.browser.onboarding.OnboardingPrefManager;
@@ -29,9 +30,10 @@ public final class BravePackageReplacedBroadcastReceiver extends BroadcastReceiv
             ChromeSharedPreferences.getInstance()
                     .writeInt(BravePreferenceKeys.BRAVE_APP_OPEN_COUNT, 0);
             // Set dormant users notifications
-            if (OnboardingPrefManager.getInstance().isDormantUsersEngagementEnabled()
-                    || context.getPackageName().equals(
-                            BraveConstants.BRAVE_PRODUCTION_PACKAGE_NAME)) {
+            if (BraveConfig.ENABLE_PROMOTIONS
+                    && (OnboardingPrefManager.getInstance().isDormantUsersEngagementEnabled()
+                            || context.getPackageName()
+                                    .equals(BraveConstants.BRAVE_PRODUCTION_PACKAGE_NAME))) {
                 OnboardingPrefManager.getInstance().setDormantUsersPrefs();
                 if (!OnboardingPrefManager.getInstance().isDormantUsersNotificationsStarted()) {
                     RetentionNotificationUtil.scheduleDormantUsersNotifications(context);

@@ -14,6 +14,7 @@ import android.net.Uri;
 import org.chromium.base.BravePreferenceKeys;
 import org.chromium.base.ResettersForTesting;
 import org.chromium.base.shared_preferences.SharedPreferencesManager;
+import org.chromium.chrome.browser.BraveConfig;
 import org.chromium.chrome.browser.preferences.ChromeSharedPreferences;
 import org.chromium.chrome.browser.set_default_browser.BraveSetDefaultBrowserUtils;
 import org.chromium.chrome.browser.vpn.utils.BraveVpnPrefUtils;
@@ -143,7 +144,7 @@ public class RateUtils {
      * </ul>
      */
     public boolean shouldShowRateDialog(Context context) {
-        if (getPrefRateDontShowAgain()) {
+        if (!BraveConfig.ENABLE_PROMOTIONS || getPrefRateDontShowAgain()) {
             return false;
         }
         return isQaForceRateDialogEnabled() || (mainCriteria() && anyOneSubCriteria(context));

@@ -3,7 +3,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import BraveVPN
 import Data
 import Foundation
 import Preferences
@@ -31,7 +30,6 @@ public struct PrivacyReportsManager {
   }
 
   private static var saveBlockedResourcesTimer: Timer?
-  private static var vpnAlertsTimer: Timer?
 
   public static func scheduleProcessingBlockedRequests(isPrivateBrowsing: Bool) {
     saveBlockedResourcesTimer?.invalidate()
@@ -42,19 +40,6 @@ public struct PrivacyReportsManager {
     { _ in
       if !isPrivateBrowsing {
         processBlockedRequests()
-      }
-    }
-  }
-
-  public static func scheduleVPNAlertsTask() {
-    vpnAlertsTimer?.invalidate()
-
-    // Because fetching VPN alerts involves making a url request,
-    // the time interval to fetch them is longer than the local on-device blocked request processing.
-    let timeInterval = AppConstants.isOfficialBuild ? 5.minutes : 1.minutes
-    vpnAlertsTimer = Timer.scheduledTimer(withTimeInterval: timeInterval, repeats: true) { _ in
-      if Preferences.PrivacyReports.captureVPNAlerts.value {
-        BraveVPN.processVPNAlerts()
       }
     }
   }
@@ -78,7 +63,9 @@ public struct PrivacyReportsManager {
     Preferences.PrivacyReports.nextConsolidationDate.value = Date().advanced(by: 7.days)
 
     BlockedResource.consolidateData(olderThan: range)
+    #if !BRAVE_IOS_SLIM
     BraveVPNAlert.consolidateData(olderThan: range)
+    #endif
   }
 
   // MARK: - View
@@ -87,9 +74,7 @@ public struct PrivacyReportsManager {
     isPrivateBrowsing: Bool,
     isOriginPurchased: Bool
   ) -> PrivacyReportsView {
-    let last = BraveVPNAlert.last(3)
     let view = PrivacyReportsView(
-      lastVPNAlerts: last,
       isPrivateBrowsing: isPrivateBrowsing,
       isOriginPurchased: isOriginPurchased
     )
@@ -104,6 +89,9 @@ public struct PrivacyReportsManager {
   public static let notificationID = "privacy-report-weekly-notification"
 
   public static func scheduleNotification(debugMode: Bool) {
+    #if BRAVE_IOS_SLIM
+    cancelNotification()
+    #else
     let notificationCenter = UNUserNotificationCenter.current()
 
     if debugMode {
@@ -159,6 +147,7 @@ public struct PrivacyReportsManager {
         }
       }
     }
+    #endif
   }
 
   public static func cancelNotification() {

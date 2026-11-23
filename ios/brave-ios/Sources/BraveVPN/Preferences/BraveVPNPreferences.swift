@@ -11,7 +11,9 @@ extension PrefService {
   /// Whether or not the Brave VPN feature in general is available to use and the UI should display
   /// buttons/settings for it.
   public var isBraveVPNAvailable: Bool {
-    // Right now this feature is always available unless its managed/forced by policy
+    // BraveCore exports an empty preference name when VPN was not compiled in.
+    guard !kManagedBraveVPNDisabledPrefName.isEmpty else { return false }
+
     let isDisabledByPolicy =
       isManagedPreference(forPath: kManagedBraveVPNDisabledPrefName)
       && boolean(forPath: kManagedBraveVPNDisabledPrefName)

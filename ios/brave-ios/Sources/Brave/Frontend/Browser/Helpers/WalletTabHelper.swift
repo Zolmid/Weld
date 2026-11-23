@@ -3,6 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // You can obtain one at https://mozilla.org/MPL/2.0/.
 
+#if !BRAVE_IOS_SLIM
 import BraveCore
 import BraveWallet
 import Data
@@ -682,3 +683,4 @@ extension WalletTabHelper: BraveWalletKeyringServiceObserver {
   func accountsAdded(addedAccounts: [BraveWallet.AccountInfo]) {
   }
 }
+#endif

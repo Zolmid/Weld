@@ -15,10 +15,27 @@ export async function build(
     & buildOptions.TargetConfigOptions
     & buildOptions.GnArgsOptions
     & buildOptions.GnGenOptions
-    & buildOptions.NinjaOptions,
+    & buildOptions.NinjaOptions & { slim?: boolean },
 ) {
   config.buildConfig = buildConfig
-  config.update(options)
+  config.update(
+    options.slim
+      ? {
+          ...options,
+          gn: [
+            ...(options.gn ?? []),
+            'enable_ai_chat:false',
+            'enable_local_ai:false',
+            'enable_brave_wallet:false',
+            'enable_brave_rewards:false',
+            'enable_brave_ads:false',
+            'enable_brave_promotions:false',
+            'enable_brave_vpn_v1:false',
+            'enable_brave_vpn_v2:false',
+          ],
+        }
+      : options,
+  )
   buildUtils.checkVersionsMatch()
 
   util.touchOverriddenFiles()

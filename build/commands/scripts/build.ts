@@ -16,6 +16,7 @@ program
   .apply(buildOptions.supportBuildDir)
   .apply(buildOptions.supportTargetConfig)
   .apply(buildOptions.supportGnArgs)
+  .option('--slim', 'disable AI chat, wallet, rewards, ads, VPN, and promotions')
   .apply(buildOptions.supportGnGenOptions)
   .apply(buildOptions.supportNinjaOptions)
   .apply(buildOptions.supportQuiet)

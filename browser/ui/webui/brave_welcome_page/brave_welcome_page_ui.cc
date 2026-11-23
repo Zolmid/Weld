@@ -21,6 +21,7 @@
 #include "brave/browser/ui/webui/brave_welcome_page/welcome_page_features.h"
 #include "brave/browser/ui/webui/brave_welcome_page/welcome_page_handler.h"
 #include "brave/browser/ui/webui/settings/brave_import_bulk_data_handler.h"
+#include "brave/build/promotion_buildflags.h"
 #include "brave/components/brave_education/buildflags.h"
 #include "brave/components/constants/pref_names.h"
 #include "brave/components/constants/webui_url_constants.h"
@@ -104,6 +105,7 @@ BraveWelcomePageUI::BraveWelcomePageUI(content::WebUI* web_ui)
       std::make_unique<settings::DefaultBrowserHandler>());
 
   source->AddLocalizedStrings(webui::kBraveWelcomePageStrings);
+  source->AddBoolean("promotionsEnabled", BUILDFLAG(ENABLE_BRAVE_PROMOTIONS));
 
   PrefService* local_state = g_browser_process->local_state();
   source->AddBoolean("isCrashReportingPrefManaged",

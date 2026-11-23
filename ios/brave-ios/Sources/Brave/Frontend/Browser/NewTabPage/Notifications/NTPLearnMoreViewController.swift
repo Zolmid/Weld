@@ -86,7 +86,9 @@ extension NTPLearnMoreViewController: NTPLearnMoreViewDelegate {
   }
 
   func hideSponsoredImagesTapped() {
+    #if !BRAVE_IOS_SLIM
     prefs.set(false, forPath: kBraveAdsSponsoredEnabledPrefName)
+    #endif
     self.close()
   }
 

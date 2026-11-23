@@ -5,7 +5,6 @@
 
 import BraveCore
 import BraveStore
-import BraveVPN
 import Foundation
 import Preferences
 import Shared
@@ -14,7 +13,11 @@ import os.log
 extension SkusSkusService {
   @MainActor
   public func refreshSkusCredentials() async {
-    let domains = BraveStoreProductGroup.allCases.map(\.skusDomain)
+    #if BRAVE_IOS_SLIM
+    let domains = [BraveStoreProductGroup.origin.skusDomain]
+    #else
+    let domains = BraveStoreProductGroup.allCases.filter { $0 != .vpn }.map(\.skusDomain)
+    #endif
     for domain in domains {
       // Always refresh credentials and trust the credentials from Brave-Core rather than cached credentials
       let summary = await credentialSummary(domain: domain).message
@@ -27,31 +30,18 @@ extension SkusSkusService {
   @MainActor
   func updatePreferences(for domain: String, summaryData: Data) async {
     do {
-      // Once we switch VPN over to the new Skus v2 APIs, the we can switch this to SkusCredentials
-      // from the SDK. Not sure if VPN has CredentialSummary.order.id so leaving as is for now.
       let credentialSummary = try CredentialSummary.from(data: summaryData)
       let credentialType = CredentialType.from(domain: domain)
       switch credentialSummary.state {
       case .valid:
         switch credentialType {
-        case .vpn:
-          Logger.module.debug("[SkusManager] - Preparing VPN Credentials")
-          let credential = await prepareCredentialsPresentation(domain: domain, path: "*").message
-          if !credential.isEmpty,
-            let vpnCredential = BraveSkusWebHelper.fetchVPNCredential(credential, domain: domain)
-          {
-            Preferences.VPN.skusCredential.value = credential
-            BraveVPN.setCustomVPNCredential(vpnCredential)
-          }
-
-          Preferences.VPN.skusCredentialDomain.value = domain
-          Preferences.VPN.expirationDate.value = credentialSummary.expiresAt
-          Preferences.VPN.subscriptionProductId.value = credentialSummary.product?.rawValue
+        #if !BRAVE_IOS_SLIM
         case .leo:
           if Preferences.AIChat.subscriptionOrderId.value == nil {
             Preferences.AIChat.subscriptionOrderId.value = credentialSummary.orderId
           }
           Preferences.AIChat.subscriptionProductId.value = credentialSummary.product?.rawValue
+        #endif
         case .origin:
           if Preferences.BraveOrigin.purchaseOrderId.value == nil {
             Preferences.BraveOrigin.purchaseOrderId.value = credentialSummary.orderId
@@ -73,9 +63,6 @@ extension SkusSkusService {
         }
       case .sessionExpired:
         Logger.module.debug("[SkusManager] - This credential session has expired")
-        if credentialType == .vpn {
-          BraveVPN.markSkusSessionExpired()
-        }
       }
     } catch {
       Logger.module.error("[SkusManager] - \(error)")
@@ -86,14 +73,16 @@ extension SkusSkusService {
 
 private enum CredentialType {
   case unknown
-  case vpn
+  #if !BRAVE_IOS_SLIM
   case leo
+  #endif
   case origin
 
   static func from(domain: String) -> CredentialType {
     switch domain {
-    case "vpn.brave.software", "vpn.bravesoftware.com", "vpn.brave.com": return .vpn
+    #if !BRAVE_IOS_SLIM
     case "leo.brave.software", "leo.bravesoftware.com", "leo.brave.com": return .leo
+    #endif
     case "origin.brave.software", "origin.bravesoftware.com", "origin.brave.com": return .origin
     default:
       return .unknown

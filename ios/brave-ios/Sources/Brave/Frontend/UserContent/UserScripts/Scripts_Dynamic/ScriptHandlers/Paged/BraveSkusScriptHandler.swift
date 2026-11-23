@@ -6,7 +6,6 @@
 import BraveCore
 import BraveShared
 import BraveStore
-import BraveVPN
 import Foundation
 import Preferences
 import Shared

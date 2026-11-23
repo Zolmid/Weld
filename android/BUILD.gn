@@ -3,6 +3,11 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at https://mozilla.org/MPL/2.0/.
 
+import("//brave/build/config.gni")
+import("//brave/components/ai_chat/core/common/buildflags/buildflags.gni")
+import("//brave/components/brave_ads/buildflags/buildflags.gni")
+import("//brave/components/brave_rewards/core/buildflags/buildflags.gni")
+import("//brave/components/brave_vpn/common/buildflags/buildflags.gni")
 import("//brave/components/brave_wallet/common/buildflags/buildflags.gni")
 import("//brave/components/email_aliases/buildflags/buildflags.gni")
 import(
@@ -16,11 +21,8 @@ declare_args() {
 }
 
 java_cpp_enum("brave_android_java_enums_srcjar") {
-  sources = []
-
-  if (enable_brave_wallet) {
-    sources += [ "//brave/components/decentralized_dns/core/constants.h" ]
-  }
+  # The shared Android settings sources still reference these enum types.
+  sources = [ "//brave/components/decentralized_dns/core/constants.h" ]
 }
 
 java_cpp_template("brave_config_java") {
@@ -30,6 +32,12 @@ java_cpp_template("brave_config_java") {
     "BRAVE_ANDROID_WEBCOMPAT_REPORT_ENDPOINT=\"$webcompat_report_api_endpoint\"",
     "BRAVE_ANDROID_WEB_DISCOVERY_ENABLED=$enable_web_discovery_native",
     "BRAVE_ANDROID_ENABLE_EMAIL_ALIASES=$enable_email_aliases",
+    "BRAVE_ANDROID_ENABLE_AI_CHAT=$enable_ai_chat",
+    "BRAVE_ANDROID_ENABLE_ADS=$enable_brave_ads",
+    "BRAVE_ANDROID_ENABLE_PROMOTIONS=$enable_brave_promotions",
+    "BRAVE_ANDROID_ENABLE_REWARDS=$enable_brave_rewards",
+    "BRAVE_ANDROID_ENABLE_VPN=$enable_brave_vpn",
+    "BRAVE_ANDROID_ENABLE_WALLET=$enable_brave_wallet",
   ]
 }
 

@@ -3,7 +3,9 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import BraveCore
+#if !BRAVE_IOS_SLIM
 import BraveWallet
+#endif
 import Data
 import Preferences
 import Shared
@@ -33,9 +35,11 @@ class UserScriptManager {
       scripts.append(.youtubeQuality)
     }
 
+    #if !BRAVE_IOS_SLIM
     if Preferences.UserScript.leo.value {
       scripts.append(.braveLeoAIChat)
     }
+    #endif
 
     return scripts
   }
@@ -100,6 +104,7 @@ class UserScriptManager {
     }
   }()
 
+  #if !BRAVE_IOS_SLIM
   private var walletEthProviderScript: WKUserScript?
   private var walletSolProviderScript: WKUserScript?
   private var walletSolanaWeb3Script: WKUserScript?
@@ -107,6 +112,7 @@ class UserScriptManager {
 
   /// Whether or not a wallet is created and web3 provider scripts should be injected into the page
   var isWalletCreated: Bool = false
+  #endif
 
   enum ScriptType: String, CaseIterable {
     case faviconFetcher
@@ -118,12 +124,16 @@ class UserScriptManager {
     case deAmp
     case requestBlocking
     case trackerProtectionStats
+    #if !BRAVE_IOS_SLIM
     case ethereumProvider
     case solanaProvider
     case cardanoProvider
+    #endif
     case searchResultAd
     case youtubeQuality
+    #if !BRAVE_IOS_SLIM
     case braveLeoAIChat
+    #endif
     case braveTranslate
 
     fileprivate var script: WKUserScript? {
@@ -145,6 +155,7 @@ class UserScriptManager {
       case .trackerProtectionStats:
         return Preferences.UserScript.trackingProtectionStats.value
           ? ContentBlockerHelper.userScript : nil
+      #if !BRAVE_IOS_SLIM
       case .ethereumProvider:
         return Preferences.UserScript.ethereumProvider.value
           ? EthereumProviderScriptHandler.userScript : nil
@@ -154,7 +165,13 @@ class UserScriptManager {
       case .cardanoProvider:
         return Preferences.UserScript.cardanoProvider.value
           ? CardanoProviderScriptHandler.userScript : nil
-      case .searchResultAd: return BraveSearchResultAdScriptHandler.userScript
+      #endif
+      case .searchResultAd:
+        #if BRAVE_IOS_SLIM
+        return nil
+        #else
+        return BraveSearchResultAdScriptHandler.userScript
+        #endif
 
       // Always enabled scripts
       case .faviconFetcher: return FaviconScriptHandler.userScript
@@ -164,8 +181,10 @@ class UserScriptManager {
       case .youtubeQuality:
         return Preferences.UserScript.youtubeQuality.value
           ? YoutubeQualityScriptHandler.userScript : nil
+      #if !BRAVE_IOS_SLIM
       case .braveLeoAIChat:
         return Preferences.UserScript.leo.value ? BraveLeoScriptHandler.userScript : nil
+      #endif
       case .braveTranslate:
         return Preferences.UserScript.translate.value && FeatureList.kBraveTranslateEnabled.enabled
           ? BraveTranslateScriptHandler.userScript : nil
@@ -187,6 +206,7 @@ class UserScriptManager {
     }
   }
 
+  #if !BRAVE_IOS_SLIM
   func fetchWalletScripts(from braveWalletAPI: BraveWalletAPI) {
     if !braveWalletAPI.isAllowed {
       return
@@ -276,6 +296,7 @@ class UserScriptManager {
       )
     }
   }
+  #endif
 
   public func loadScripts(
     into userContentController: WKUserContentController,
@@ -363,6 +384,7 @@ class UserScriptManager {
     loadScripts(into: userContentController, scripts: userScripts, tab: tab)
 
     userContentController.do { scriptController in
+      #if !BRAVE_IOS_SLIM
       // TODO: Somehow refactor wallet and get rid of this
       // Inject WALLET specific scripts
 
@@ -432,6 +454,7 @@ class UserScriptManager {
       {
         scriptController.addUserScript(script)
       }
+      #endif
 
       // TODO: Refactor this and get rid of the `UserScriptType`
       // Inject Custom scripts

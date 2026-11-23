@@ -2,20 +2,22 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+#if !BRAVE_IOS_SLIM
 import AIChat
+#endif
 import BraveCore
 import BraveNews
 import BraveShared
 import BraveStore
 import BraveUI
-import BraveVPN
+#if !BRAVE_IOS_SLIM
 import BraveWallet
+#endif
 import Combine
 import Data
 import DataImporter
 import Growth
 import LocalAuthentication
-import NetworkExtension
 import Onboarding
 import Origin
 import Playlist
@@ -74,8 +76,10 @@ class SettingsViewController: TableViewController, BraveAccountDialogOpenerBridg
   private let p3aUtilities: BraveP3AUtils
   private let localState: any PrefService
   private let attributionManager: AttributionManager
-  private let keyringStore: KeyringStore?
-  private let cryptoStore: CryptoStore?
+  #if !BRAVE_IOS_SLIM
+  var keyringStore: KeyringStore?
+  var cryptoStore: CryptoStore?
+  #endif
   private let windowProtection: WindowProtection?
   private let ipfsAPI: IpfsAPI
   private let altIconsModel = AltIconsModel()
@@ -98,9 +102,7 @@ class SettingsViewController: TableViewController, BraveAccountDialogOpenerBridg
     p3aUtils: BraveP3AUtils,
     braveCore: BraveProfileController,
     localState: any PrefService,
-    attributionManager: AttributionManager,
-    keyringStore: KeyringStore? = nil,
-    cryptoStore: CryptoStore? = nil
+    attributionManager: AttributionManager
   ) {
     self.profile = profile
     self.tabManager = tabManager
@@ -115,8 +117,6 @@ class SettingsViewController: TableViewController, BraveAccountDialogOpenerBridg
     self.syncProfileServices = braveCore.syncProfileService
     self.p3aUtilities = p3aUtils
     self.attributionManager = attributionManager
-    self.keyringStore = keyringStore
-    self.cryptoStore = cryptoStore
     self.ipfsAPI = braveCore.ipfsAPI
 
     super.init(style: .insetGrouped)
@@ -130,8 +130,10 @@ class SettingsViewController: TableViewController, BraveAccountDialogOpenerBridg
   }
 
   deinit {
+    #if !BRAVE_IOS_SLIM
     keyringStore?.tearDown()
     cryptoStore?.tearDown()
+    #endif
 
     NotificationCenter.default.removeObserver(self)
   }
@@ -154,15 +156,6 @@ class SettingsViewController: TableViewController, BraveAccountDialogOpenerBridg
     navigationController?.view.backgroundColor = .systemGroupedBackground
 
     setUpSections()
-
-    if braveCore.profile.prefs.isBraveVPNAvailable {
-      NotificationCenter.default.addObserver(
-        self,
-        selector: #selector(vpnConfigChanged(notification:)),
-        name: .NEVPNStatusDidChange,
-        object: nil
-      )
-    }
 
     self.altIconsModel.$selectedAltAppIcon
       .dropFirst()
@@ -189,11 +182,13 @@ class SettingsViewController: TableViewController, BraveAccountDialogOpenerBridg
     navigationController?.setToolbarHidden(true, animated: animated)
   }
 
+  #if !BRAVE_IOS_SLIM
   private func displayRewardsDebugMenu() {
     guard let rewards = rewards else { return }
     let settings = RewardsDebugSettingsViewController(rewards: rewards)
     navigationController?.pushViewController(settings, animated: true)
   }
+  #endif
 
   private func displayBraveNewsDebugMenu() {
     let settings = UIHostingController(
@@ -209,23 +204,56 @@ class SettingsViewController: TableViewController, BraveAccountDialogOpenerBridg
     navigationController?.pushViewController(hostingController, animated: true)
   }
 
+  private var rewardsDebugRow: Row? {
+    #if BRAVE_IOS_SLIM
+    return nil
+    #else
+    return Row(
+      text: "View Rewards Debug Menu",
+      selection: { [unowned self] in self.displayRewardsDebugMenu() },
+      accessory: .disclosureIndicator,
+      cellClass: MultilineValue1Cell.self
+    )
+    #endif
+  }
+
+  private var walletDebugRow: Row? {
+    #if BRAVE_IOS_SLIM
+    return nil
+    #else
+    return Row(
+      text: "View Brave Wallet Debug Menu",
+      selection: { [unowned self] in self.displayBraveWalletDebugMenu() },
+      accessory: .disclosureIndicator,
+      cellClass: MultilineValue1Cell.self
+    )
+    #endif
+  }
+
+  private var leoDebugRow: Row? {
+    #if BRAVE_IOS_SLIM
+    return nil
+    #else
+    return Row(
+      text: "Leo Logs",
+      selection: { [unowned self] in
+        let controller = UIHostingController(rootView: AIChatLeoSkusLogsView())
+        self.navigationController?.pushViewController(controller, animated: true)
+      },
+      accessory: .disclosureIndicator,
+      cellClass: MultilineValue1Cell.self
+    )
+    #endif
+  }
+
+  #if !BRAVE_IOS_SLIM
   private func displayBraveWalletDebugMenu() {
     let hostingController =
       UIHostingController(rootView: BraveWalletDebugMenu())
 
     navigationController?.pushViewController(hostingController, animated: true)
   }
-
-  /// The function for refreshing VPN status for menu
-  /// - Parameter notification: NEVPNStatusDidChange
-  @objc private func vpnConfigChanged(notification: NSNotification) {
-    guard let connection = notification.object as? NEVPNConnection else { return }
-
-    if connection.status == .connected || connection.status == .disconnected {
-      setUpSections()
-      tableView.reloadData()
-    }
-  }
+  #endif
 
   // Do not use `sections` directly to access sections/rows. Use DataSource.sections instead.
   private func makeSections() -> [Static.Section] {
@@ -240,27 +268,6 @@ class SettingsViewController: TableViewController, BraveAccountDialogOpenerBridg
       aboutSection,
     ]
 
-    let shouldShowVPNSection = { () -> Bool in
-      if !braveCore.profile.prefs.isBraveVPNAvailable {
-        return false
-      }
-
-      if !BraveVPNProductInfo.isComplete || Preferences.VPN.vpnSettingHeaderWasDismissed.value {
-        return false
-      }
-
-      switch BraveVPN.vpnState {
-      case .notPurchased, .expired:
-        return true
-      case .purchased:
-        return false
-      }
-    }()
-
-    if shouldShowVPNSection {
-      list.insert(enableBraveVPNSection, at: 0)
-    }
-
     // Always show debug section in local builds and show if previously shown
     if !AppConstants.isOfficialBuild || Preferences.Debug.developerOptionsEnabled.value {
       list.append(debugSection)
@@ -270,29 +277,6 @@ class SettingsViewController: TableViewController, BraveAccountDialogOpenerBridg
   }
 
   // MARK: - Sections
-
-  private lazy var enableBraveVPNSection: Static.Section = {
-    let header = BraveVPNEnableSettingsHeaderView(
-      enableVPNTapped: { [weak self] in
-        self?.enableVPNTapped()
-      },
-      dismissHeaderTapped: { [weak self] in
-        self?.dismissVPNHeaderTapped()
-      }
-    )
-    let headerHostingVC = UIHostingController(rootView: header)
-
-    let calculatedSize = headerHostingVC.view.systemLayoutSizeFitting(
-      CGSize(width: navigationController?.navigationBar.frame.width ?? 0, height: 300),
-      withHorizontalFittingPriority: .required,
-      verticalFittingPriority: .fittingSizeLevel
-    )
-
-    headerHostingVC.view.backgroundColor = .clear
-    headerHostingVC.view.bounds = CGRect(size: calculatedSize)
-
-    return Static.Section(header: .view(headerHostingVC.view))
-  }()
 
   private lazy var defaultBrowserSection: Static.Section = {
     var rows: [Row] = []
@@ -497,6 +481,7 @@ class SettingsViewController: TableViewController, BraveAccountDialogOpenerBridg
       uuid: featureSectionUUID.uuidString
     )
 
+    #if !BRAVE_IOS_SLIM
     if BraveRewards.isSupported(prefService: braveCore.profile.prefs), let rewards = rewards {
       section.rows += [
         Row(
@@ -510,6 +495,7 @@ class SettingsViewController: TableViewController, BraveAccountDialogOpenerBridg
         )
       ]
     }
+    #endif
 
     if braveCore.profile.prefs.isBraveNewsAvailable {
       section.rows.append(
@@ -538,15 +524,13 @@ class SettingsViewController: TableViewController, BraveAccountDialogOpenerBridg
       )
     }
 
+    #if !BRAVE_IOS_SLIM
     if !tabManager.privateBrowsingManager.isPrivateBrowsing
       && AIChatUtils.isAIChatEnabled(for: braveCore.profile.prefs)
     {
       section.rows.append(leoSettingsRow)
     }
-
-    if braveCore.profile.prefs.isBraveVPNAvailable {
-      section.rows.append(vpnSettingsRow)
-    }
+    #endif
 
     if braveCore.profile.prefs.isPlaylistAvailable {
       section.rows.append(
@@ -653,7 +637,6 @@ class SettingsViewController: TableViewController, BraveAccountDialogOpenerBridg
             self.navigationController?.pushViewController(
               ShortcutSettingsViewController(
                 isPlaylistAvailable: braveCore.profile.prefs.isPlaylistAvailable,
-                isBraveVPNAvailable: braveCore.profile.prefs.isBraveVPNAvailable,
                 isBraveNewsAvailable: braveCore.profile.prefs.isBraveNewsAvailable
               ),
               animated: true
@@ -1084,7 +1067,11 @@ class SettingsViewController: TableViewController, BraveAccountDialogOpenerBridg
         text: Strings.ShortcutButton.shortcutButtonTitle,
         selection: { [weak self] in
           guard let self else { return }
+          #if BRAVE_IOS_SLIM
+          let isWalletAvailable = false
+          #else
           let isWalletAvailable = braveCore.braveWalletAPI.isAllowed
+          #endif
           let controller = UIHostingController(
             rootView: ShortcutButtonPickerView(
               prefs: braveCore.profile.prefs,
@@ -1100,6 +1087,7 @@ class SettingsViewController: TableViewController, BraveAccountDialogOpenerBridg
       )
     )
 
+    #if !BRAVE_IOS_SLIM
     if BraveRewards.isSupported(prefService: braveCore.profile.prefs) {
       display.rows.append(
         .boolRow(
@@ -1109,81 +1097,12 @@ class SettingsViewController: TableViewController, BraveAccountDialogOpenerBridg
         )
       )
     }
+    #endif
 
     return display
   }()
 
-  private var vpnSettingsRow: Row {
-    let (text, color) = { () -> (String, UIColor) in
-      if Preferences.VPN.vpnReceiptStatus.value
-        == BraveVPN.ReceiptResponse.Status.retryPeriod.rawValue
-      {
-        return (
-          Strings.VPN.updateActionCellTitle, UIColor(braveSystemName: .systemfeedbackErrorText)
-        )
-      }
-
-      switch BraveVPN.vpnState {
-      case .notPurchased:
-        return ("", UIColor.black)
-      case .purchased(let enabled):
-        if enabled {
-          return (
-            Strings.VPN.settingsVPNEnabled, UIColor(braveSystemName: .systemfeedbackSuccessText)
-          )
-        } else {
-          return (
-            Strings.VPN.settingsVPNDisabled, UIColor(braveSystemName: .systemfeedbackErrorText)
-          )
-        }
-      case .expired:
-        return (Strings.VPN.settingsVPNExpired, UIColor(braveSystemName: .systemfeedbackErrorText))
-      }
-    }()
-
-    return Row(
-      text: Strings.VPN.vpnName,
-      detailText: text,
-      selection: { [unowned self] in
-        if BraveVPNProductInfo.isComplete {
-          switch BraveVPN.vpnState {
-          case .notPurchased, .expired:
-            guard BraveVPN.vpnState.isPaywallEnabled else { return }
-            self.presentVPNPaywall()
-          case .purchased:
-            let vpnSettingsVC = BraveVPNSettingsViewController(
-              skusService: Skus.SkusServiceFactory.get(profile: braveCore.profile),
-              openURL: { [unowned self] url in
-                self.settingsDelegate?.settingsOpenURLInNewTab(url)
-                self.dismiss(animated: true)
-              }
-            )
-            self.navigationController?.pushViewController(vpnSettingsVC, animated: true)
-          }
-        } else {
-          let alert = UIAlertController(
-            title: Strings.VPN.errorCantGetPricesTitle,
-            message: Strings.VPN.errorCantGetPricesBody,
-            preferredStyle: .alert
-          )
-
-          alert.addAction(UIAlertAction(title: Strings.OKString, style: .default, handler: nil))
-          self.present(alert, animated: true, completion: nil)
-        }
-      },
-      image: Preferences.VPN.vpnReceiptStatus.value
-        == BraveVPN.ReceiptResponse.Status.retryPeriod.rawValue
-        ? UIImage(braveSystemNamed: "leo.warning.triangle-filled")?
-          .withRenderingMode(.alwaysOriginal)
-          .withTintColor(UIColor(braveSystemName: .systemfeedbackErrorText))
-        : UIImage(braveSystemNamed: "leo.product.vpn"),
-      accessory: .disclosureIndicator,
-      cellClass: ColoredDetailCell.self,
-      context: [ColoredDetailCell.colorKey: color],
-      uuid: "vpnrow"
-    )
-  }
-
+  #if !BRAVE_IOS_SLIM
   private var leoSettingsRow: Row {
     return Row(
       text: Strings.leoMenuItem,
@@ -1210,6 +1129,7 @@ class SettingsViewController: TableViewController, BraveAccountDialogOpenerBridg
       accessory: .disclosureIndicator
     )
   }
+  #endif
 
   private lazy var autofillSection: Static.Section = {
     return Section(
@@ -1467,14 +1387,7 @@ class SettingsViewController: TableViewController, BraveAccountDialogOpenerBridg
           accessory: .disclosureIndicator,
           cellClass: MultilineSubtitleCell.self
         ),
-        Row(
-          text: "View Rewards Debug Menu",
-          selection: { [unowned self] in
-            self.displayRewardsDebugMenu()
-          },
-          accessory: .disclosureIndicator,
-          cellClass: MultilineValue1Cell.self
-        ),
+        rewardsDebugRow,
         Row(
           text: "View Brave News Debug Menu",
           selection: { [unowned self] in
@@ -1491,14 +1404,7 @@ class SettingsViewController: TableViewController, BraveAccountDialogOpenerBridg
           accessory: .disclosureIndicator,
           cellClass: MultilineValue1Cell.self
         ),
-        Row(
-          text: "View Brave Wallet Debug Menu",
-          selection: { [unowned self] in
-            self.displayBraveWalletDebugMenu()
-          },
-          accessory: .disclosureIndicator,
-          cellClass: MultilineValue1Cell.self
-        ),
+        walletDebugRow,
         Row(
           text: "Consolidate Privacy Report Data",
           detailText:
@@ -1512,14 +1418,6 @@ class SettingsViewController: TableViewController, BraveAccountDialogOpenerBridg
           cellClass: MultilineButtonCell.self
         ),
         Row(
-          text: "VPN Logs",
-          selection: { [unowned self] in
-            self.navigationController?.pushViewController(VPNLogsViewController(), animated: true)
-          },
-          accessory: .disclosureIndicator,
-          cellClass: MultilineValue1Cell.self
-        ),
-        Row(
           text: "Brave Talk Logs",
           selection: { [unowned self] in
             let controller = UIHostingController(rootView: BraveTalkLogsView())
@@ -1528,15 +1426,7 @@ class SettingsViewController: TableViewController, BraveAccountDialogOpenerBridg
           accessory: .disclosureIndicator,
           cellClass: MultilineValue1Cell.self
         ),
-        Row(
-          text: "Leo Logs",
-          selection: { [unowned self] in
-            let controller = UIHostingController(rootView: AIChatLeoSkusLogsView())
-            self.navigationController?.pushViewController(controller, animated: true)
-          },
-          accessory: .disclosureIndicator,
-          cellClass: MultilineValue1Cell.self
-        ),
+        leoDebugRow,
         Row(
           text: "Playlist Debug",
           selection: { [unowned self] in
@@ -1636,7 +1526,7 @@ class SettingsViewController: TableViewController, BraveAccountDialogOpenerBridg
           },
           cellClass: MultilineButtonCell.self
         ),
-      ],
+      ].compactMap { $0 },
       uuid: debugSectionUUID
     )
     if !FeatureList.kUseProfileWebViewConfiguration.enabled {
@@ -1728,6 +1618,9 @@ class SettingsViewController: TableViewController, BraveAccountDialogOpenerBridg
   }
 
   private func setUpSections() {
+    #if BRAVE_IOS_SLIM
+    dataSource.sections = makeSections()
+    #else
     var copyOfSections = self.makeSections()
 
     if let featureSectionIndex = copyOfSections.firstIndex(where: {
@@ -1773,55 +1666,9 @@ class SettingsViewController: TableViewController, BraveAccountDialogOpenerBridg
       }
     }
     self.dataSource.sections = copyOfSections
+    #endif
   }
 
-  private func presentVPNPaywall() {
-    let vpnPaywallView = BraveVPNPaywallView(
-      openVPNAuthenticationInNewTab: { [weak self] in
-        guard let self = self else { return }
-        self.settingsDelegate?.settingsOpenURLInNewTab(.brave.braveVPNRefreshCredentials)
-      },
-      openDirectCheckoutInNewTab: { [weak self] in
-        guard let self else { return }
-        self.settingsDelegate?.settingsOpenURLInNewTab(.brave.braveVPNCheckoutURL)
-      },
-      openLearnMoreInNewTab: { [weak self] in
-        guard let self else { return }
-        self.settingsDelegate?.settingsOpenURLInNewTab(.brave.braveVPNLearnMoreURL)
-      },
-      installVPNProfile: { [weak self] in
-        guard let self = self else { return }
-        self.dismiss(animated: true) {
-          self.present(UIHostingController(rootView: InstallVPNProfileView()), animated: true)
-        }
-      }
-    )
-
-    let vpnHostingVC = UIHostingController(rootView: vpnPaywallView)
-    self.present(vpnHostingVC, animated: true)
-  }
-
-  // MARK: - Actions
-
-  private func enableVPNTapped() {
-    let state = BraveVPN.vpnState
-
-    switch state {
-    case .notPurchased, .expired:
-      guard state.isPaywallEnabled else { return }
-
-      presentVPNPaywall()
-    case .purchased:
-      BraveVPN.reconnect()
-      dismiss(animated: true)
-    }
-  }
-
-  private func dismissVPNHeaderTapped() {
-    if dataSource.sections.isEmpty { return }
-    dataSource.sections[0] = Static.Section()
-    Preferences.VPN.vpnSettingHeaderWasDismissed.value = true
-  }
 }
 
 private final class BraveAccountIconCell: UITableViewCell, Cell {

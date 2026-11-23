@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+core_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+workspace_dir="$(cd "$core_dir/../.." && pwd)"
+cd "$core_dir"
+
+if [[ "$(uname -s)" != Darwin ]]; then
+  echo 'These local actions are for macOS. See LOCAL-SETUP.md for build servers.' >&2
+  exit 2
+fi
+if [[ "$(basename "$(dirname "$core_dir")")" != src ]]; then
+  echo 'This checkout needs its own Chromium src/ parent; use the configured Local project.' >&2
+  exit 2
+fi
+
+export DEVELOPER_DIR="${DEVELOPER_DIR:-$(xcode-select -p)}"
+unset SDKROOT
+export PATH="$workspace_dir/tools/pnpm/node_modules/.bin:$core_dir/vendor/depot_tools:$PATH"
+
+action="${1:-check}"
+if [[ $# -gt 0 ]]; then shift; fi
+case "$action" in
+  check)
+    node --version
+    pnpm --version
+    git --version
+    xcodebuild -version
+    xcrun --sdk macosx --show-sdk-version
+    xcrun --sdk iphoneos --show-sdk-version
+    node -e 'const p=require("./package.json"); console.log("Brave",p.version,"Chromium",p.config.projects.chrome.tag); for (const [name, spec] of Object.entries(p.devEngines)) console.log(name, spec.version)'
+    if [[ -f ../DEPS && -x ../buildtools/mac/gn ]]; then
+      echo 'Chromium checkout and GN found; sync/build success still requires their command results.'
+    else
+      echo 'Chromium/toolchain initialization is incomplete. This is not build-ready yet.'
+    fi
+    ;;
+  sync-apple)
+    # This Mac's IPv6 route stalls Python downloads. TLS validation is unchanged.
+    export BRAVE_FETCH_IPV4_ONLY="${BRAVE_FETCH_IPV4_ONLY:-1}"
+    export PYTHONPATH="$core_dir/.codex/ipv4${PYTHONPATH:+:$PYTHONPATH}"
+    if [[ -f "$workspace_dir/.gclient" ]]; then
+      exec pnpm run sync --target_os=mac,ios --target_arch=arm64 --no-history
+    fi
+    exec pnpm run init --target_os=mac,ios --target_arch=arm64 --no-history
+    ;;
+  build-mac) exec pnpm run build Component --target_os=mac --target_arch=arm64 "$@" ;;
+  build-ios) exec pnpm run build Debug --target_os=ios --target_arch=arm64 --target_environment=simulator "$@" ;;
+  open-ios) exec pnpm run ios_bootstrap --open_xcodeproj "$@" ;;
+  start-mac) exec pnpm run start Component --target_os=mac --target_arch=arm64 "$@" ;;
+  *) echo "Unknown action: $action" >&2; exit 2 ;;
+esac

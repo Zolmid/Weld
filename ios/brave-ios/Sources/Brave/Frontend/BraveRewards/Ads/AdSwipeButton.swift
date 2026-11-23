@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+#if !BRAVE_IOS_SLIM
 import UIKit
 
 class AdSwipeButton: UIControl {
@@ -81,3 +82,4 @@ class AdSwipeButton: UIControl {
     }
   }
 }
+#endif
