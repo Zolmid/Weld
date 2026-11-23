@@ -2,7 +2,11 @@
 
 Weld 是基于 Brave 和 Chromium 开发的轻量浏览器，保留 Shields、常规浏览、默认浏览器提示和必要通知。Weld 精简版关闭 Leo、钱包、Rewards、Brave Ads、VPN 和内置推广。
 
-开发从 [Weld 仓库](https://github.com/Zolmid/Weld) 开始。下文保留 Brave Core 的构建背景与上游出处。
+开发从 [Weld 仓库](https://github.com/Zolmid/Weld) 开始。
+
+- [开发与构建](docs/weld/development.md)
+- [CI、签名与发布](docs/weld/ci-release.md)
+- [PR、上游同步与 Chromium 安全更新](docs/weld/maintenance.md)
 
 ## Brave Core 上游
 
@@ -37,8 +41,8 @@ defined in `package.json` and `src/brave/DEPS`:
 
 ## Downloads
 
-You can [visit our website](https://brave.com/download) to get the latest stable
-release.
+Weld packages are listed in the [Weld release archive](https://github.com/Zolmid/Weld/releases).
+The [Brave upstream download site](https://brave.com/download) publishes Brave releases.
 
 ## Contributing
 

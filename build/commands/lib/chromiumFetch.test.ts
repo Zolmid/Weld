@@ -18,6 +18,7 @@ import * as Log from './log.ts'
 import util from './util.ts'
 
 jest.mock('./log.ts', () => ({
+  ...jest.requireActual('./log.ts'),
   warn: jest.fn(),
   command: jest.fn(),
 }))

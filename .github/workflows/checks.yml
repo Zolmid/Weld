@@ -1,0 +1,44 @@
+name: Weld checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  source:
+    name: Source checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+          filter: blob:none
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: 24.21.0
+          package-manager-cache: false
+      - name: Check source and patch syntax
+        run: |
+          python3 -B ci/check.py
+          git diff --check HEAD~1 HEAD -- . ':(exclude)patches/*.patch'
+          git diff --name-only HEAD~1 HEAD -- 'patches/*.patch' |
+            while IFS= read -r patch; do
+              if [ -f "$patch" ]; then git apply --stat "$patch" >/dev/null; fi
+            done
+          python3 -m compileall -q ci
+      - name: Type check, lint and run build-script tests
+        run: |
+          npm install --global --no-audit --no-fund pnpm@11.11.0
+          pnpm install --frozen-lockfile --yes
+          git init -q vendor/depot_tools
+          git -C vendor/depot_tools fetch --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git 006c1455f9ac26d03cafdf337003fdc3144dbff3
+          git -C vendor/depot_tools checkout --detach FETCH_HEAD
+          pnpm run test:scripts --runInBand

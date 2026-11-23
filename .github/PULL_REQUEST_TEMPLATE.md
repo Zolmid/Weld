@@ -1,42 +1,15 @@
-<!-- Add brave-browser issue below that this PR will resolve -->
-- Resolves
+## 改动与影响
 
-<!-- CI-related labels that can be applied to this PR:
-* CI/disable-pipeline-step-cache - do not cache build steps between runs for the same commit hash
-* CI/enable-coverage - enable coverage reporting
-* CI/enable-test-only-affected - only run tests affected by changes in the PR
-* CI/run-audit-deps (1) - run audit_deps
-* CI/run-linux-arm64, CI/run-macos-x64, CI/run-windows-arm64, CI/run-windows-x86 - run builds that would otherwise be skipped
-* CI/run-network-audit (1) - run network-audit
-* CI/run-perf-smoke-tests - run perf_tests
-* CI/run-upstream-tests - run Chromium unit and browser tests on Linux and Windows (otherwise only on Linux)
-* CI/skip - do not run CI builds (except noplatform)
-* CI/skip-android, CI/skip-macos-arm64, CI/skip-ios, CI/skip-windows-x64 - skip CI builds for specific platforms
-* CI/skip-origin - do not run any builds for Brave Origin
-* CI/skip-upstream-tests - do not run Chromium unit, or browser tests (otherwise only on Linux)
-* CI/storybook-url (1) - deploy storybook and provide a unique URL for each build
+关联问题，改动动机和用户可观察的行为。说明涉及的平台、功能开关和发布风险。
 
-(1) applied automatically when some files are changed (see: https://github.com/brave/brave-core/blob/master/.github/labeler.yml)
--->
+## 验证
 
-<!--
-## Checklist:
+- [ ] Source checks 通过，附上本地或 GitHub Actions 结果。
+- [ ] 受影响平台已完成针对性测试，记录产物版本和提交 SHA。
+- [ ] 改动浏览器行为时，验证正常浏览、Shields 和必要提示。
+- [ ] 改动 iOS、签名、发布或上游版本时，附对应的验证证据。
 
-- Review design docs
-  [Browser design principles](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/chrome_browser_design_principles.md)
-  [Style guide](https://chromium.googlesource.com/chromium/src/+/main/styleguide/c++/c++.md)
-  [Core principles](https://www.chromium.org/developers/core-principles/)
-- Ensure there are (tests)[https://www.chromium.org/developers/testing/]. Unit test as much as possible (including edge cases), but also include browser tests covering high level functionality.
-- Ensure that there are comments explaining what classes/methods are/do. The "why" is often more important than the "what" in comments. Also update any relevant docs (moving docs from wiki to brave-core if necessary).
-- Request security or other review (third-party libraries, rust code, etc...) if applicable [security/privacy review is needed](https://github.com/brave/brave-browser/wiki/Security-reviews) [other review](https://github.com/brave/reviews/issues/new/choose)
-  Also see [adding third-party libraries](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/adding_to_third_party.md) for general guidelines on using third party code
-- Make sure there is a [ticket](https://github.com/brave/brave-browser/issues) for your issue
-- Use Github [auto-closing keywords](https://docs.github.com/en/github/managing-your-work-on-github/linking-a-pull-request-to-an-issue) in the PR description above
-- Write a good [PR/commit description](https://google.github.io/eng-practices/review/developer/cl-descriptions.html)
-- Squash any review feedback or "fixup" commits before merge, so that history is a record of what happened in the repo, not your PR
-- Add appropriate labels (`QA/Yes` or `QA/No`; `release-notes/include` or `release-notes/exclude`; `OS/...`) to the associated issue
-- Checked the PR locally:
-  * `pnpm run test brave_browser_tests`, `pnpm run test brave_unit_tests` [wiki](https://github.com/brave/brave-browser/wiki/Tests)
-  * `pnpm run presubmit` [wiki](https://github.com/brave/brave-browser/wiki/Presubmit-checks), `pnpm run gn_check`
-- Run `git rebase master` (if needed)
--->
+## 发布与回退
+
+说明是否需要更新说明、配置迁移、更新渠道切换或回退操作。
+上游合并附 Brave 提交、Chromium tag 和 SHA。涉及安全更新时附官方公告与覆盖范围。

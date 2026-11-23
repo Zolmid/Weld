@@ -1,0 +1,118 @@
+name: Weld release draft
+run-name: Weld release · ${{ inputs.version }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_run:
+        description: Successful Weld platform candidates run ID for this main commit
+        required: true
+        type: string
+      version:
+        description: Weld release tag (vMAJOR.MINOR.PATCH)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: weld-release
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: github.repository == 'Zolmid/Weld' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      CANDIDATE_RUN: ${{ inputs.candidate_run }}
+      WELD_VERSION: ${{ inputs.version }}
+    outputs:
+      run: ${{ steps.candidate.outputs.run }}
+      version: ${{ steps.candidate.outputs.version }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - id: candidate
+        name: Verify candidate origin and commit
+        run: |
+          [[ "$CANDIDATE_RUN" =~ ^[0-9]+$ && "$WELD_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$CANDIDATE_RUN" |
+            jq -e --arg sha "$GITHUB_SHA" --arg repo "$GITHUB_REPOSITORY" '
+              .path == ".github/workflows/candidates.yml" and .conclusion == "success"
+              and .head_branch == "main" and .head_sha == $sha and .event == "workflow_dispatch"
+              and .head_repository.full_name == $repo'
+          [[ "$(gh api "repos/$GITHUB_REPOSITORY/branches/main" --jq .commit.sha)" == "$GITHUB_SHA" ]]
+          python3 -B ci/upstream.py report "$RUNNER_TEMP/weld-release-upstream.json"
+          jq -e '.stable_newer_than_weld | length == 0' "$RUNNER_TEMP/weld-release-upstream.json"
+          echo "run=$CANDIDATE_RUN" >> "$GITHUB_OUTPUT"
+          echo "version=$WELD_VERSION" >> "$GITHUB_OUTPUT"
+
+  package:
+    needs: verify
+    name: Prepare release ${{ matrix.platform }}
+    environment: weld-signing-${{ matrix.platform }}
+    permissions:
+      contents: read
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {platform: linux, runner: weld-release-linux}
+          - {platform: win, runner: weld-release-windows}
+          - {platform: mac, runner: weld-release-macos}
+          - {platform: ios, runner: weld-release-ios}
+          - {platform: android, runner: weld-release-android}
+    runs-on: [self-hosted, "${{ matrix.runner }}"]
+    env:
+      WELD_VERSION: ${{ needs.verify.outputs.version }}
+      WELD_RELEASE_DRIVER: ${{ vars.WELD_RELEASE_DRIVER }}
+      WELD_ANDROID_SERIAL: ${{ vars.WELD_ANDROID_SERIAL }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: weld-candidate-${{ matrix.platform }}
+          run-id: ${{ needs.verify.outputs.run }}
+          github-token: ${{ github.token }}
+          path: candidate
+      - name: Sign and verify package
+        run: python3 -B ci/distribute.py "${{ matrix.platform }}" candidate distribution
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: weld-release-${{ matrix.platform }}
+          path: distribution/*
+          if-no-files-found: error
+          retention-days: 7
+
+  draft:
+    needs: [verify, package]
+    runs-on: ubuntu-24.04
+    environment: weld-release
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      WELD_VERSION: ${{ needs.verify.outputs.version }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: weld-release-*
+          path: distribution
+      - name: Verify all packages and create draft
+        run: |
+          python3 -B ci/distribute.py verify distribution
+          [[ "$(gh api "repos/$GITHUB_REPOSITORY/branches/main" --jq .commit.sha)" == "$GITHUB_SHA" ]]
+          gh release create "$WELD_VERSION" --draft --target "$GITHUB_SHA" \
+            --title "Weld $WELD_VERSION" --generate-notes --fail-on-no-commits distribution/verified/*

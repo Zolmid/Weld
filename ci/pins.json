@@ -1,0 +1,7 @@
+{
+  "brave_base": "ba97d276d3c122d3e57d5193a9cd59e233d34492",
+  "chromium_tag": "157.0.8103.30",
+  "chromium_revision": "638dd0ef2fd334b657efb909d06d0164ea4d9443",
+  "node": "24.21.0",
+  "pnpm": "11.11.0"
+}

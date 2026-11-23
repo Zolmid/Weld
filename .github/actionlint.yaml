@@ -1,0 +1,12 @@
+self-hosted-runner:
+  labels:
+    - weld-linux-x64
+    - weld-windows-x64
+    - weld-macos-arm64
+    - weld-ios-arm64
+    - weld-android-arm64-emulator
+    - weld-release-linux
+    - weld-release-windows
+    - weld-release-macos
+    - weld-release-ios
+    - weld-release-android

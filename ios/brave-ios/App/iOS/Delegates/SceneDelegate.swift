@@ -506,6 +506,11 @@ extension SceneDelegate {
       let url = components.url
     else { return }
 
+    if arguments.contains("--brave-smoke-block-scripts") {
+      Preferences.Shields.blockScripts.value = true
+    } else if arguments.contains("--brave-smoke-allow-scripts") {
+      Preferences.Shields.blockScripts.value = false
+    }
     browserViewController.handleNavigationPath(path: .url(webURL: url, isPrivate: false))
   }
   #endif
