@@ -43,13 +43,16 @@ def run(*command):
     subprocess.run(command, check=True)
 
 
-def extract(package, target):
+def extract(package, target, preserve_bundle=False):
     with ZipFile(package) as archive:
         for member in archive.infolist():
             path = (target / member.filename).resolve()
             if target not in path.parents:
                 raise SystemExit(f'Unsafe archive member: {member.filename}')
-        archive.extractall(target)
+        if not preserve_bundle:
+            archive.extractall(target)
+    if preserve_bundle:
+        run('ditto', '-x', '-k', package, target)
 
 
 def validate_signed(platform, package):
@@ -57,10 +60,26 @@ def validate_signed(platform, package):
         run('hdiutil', 'verify', package)
         run('xcrun', 'stapler', 'validate', package)
         run('spctl', '--assess', '--type', 'open', '--context', 'context:primary-signature', package)
+        with TemporaryDirectory() as directory:
+            mount = Path(directory).resolve()
+            run('hdiutil', 'attach', '-nobrowse', '-readonly', '-mountpoint', mount, package)
+            try:
+                apps = list(mount.glob('*.app'))
+                if len(apps) != 1:
+                    raise SystemExit('Expected one application on the DMG.')
+                app = apps[0]
+                run('codesign', '--verify', '--deep', '--strict', app)
+                info = plistlib.loads((app / 'Contents/Info.plist').read_bytes())
+                if info['CFBundleIdentifier'].startswith('com.brave.'):
+                    raise SystemExit('The DMG must use a Weld-owned application identifier.')
+                browser = app / 'Contents/MacOS' / info['CFBundleExecutable']
+                run(sys.executable, Path(__file__).with_name('desktop_smoke.py'), browser)
+            finally:
+                run('hdiutil', 'detach', mount)
     elif platform == 'ios':
         with TemporaryDirectory() as directory:
             root = Path(directory).resolve()
-            extract(package, root)
+            extract(package, root, preserve_bundle=True)
             apps = list((root / 'Payload').glob('*.app'))
             if len(apps) != 1:
                 raise SystemExit('Expected one Payload app in the IPA.')
@@ -78,7 +97,7 @@ def validate_signed(platform, package):
             for required in ('brave.exe', 'chrome.dll', 'chrome_elf.dll', 'resources.pak'):
                 if not (browser.parent / required).is_file():
                     raise SystemExit(f'Windows package lacks {required}.')
-            run('signtool.exe', 'verify', '/pa', browser)
+            run('signtool.exe', 'verify', '/pa', '/tw', browser)
             run(sys.executable, Path(__file__).with_name('desktop_smoke.py'), browser)
     elif platform == 'android':
         run('apksigner', 'verify', '--verbose', package)

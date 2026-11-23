@@ -34,6 +34,18 @@ jobs:
               if [ -f "$patch" ]; then git apply --stat "$patch" >/dev/null; fi
             done
           python3 -m compileall -q ci
+          python3 -m unittest discover -s ci
+      - name: Validate GitHub Actions workflows
+        working-directory: ${{ runner.temp }}
+        run: |
+          url=https://github.com/rhysd/actionlint/releases/download/v1.7.12
+          file=actionlint_1.7.12_linux_amd64.tar.gz
+          curl -fsSLO "$url/$file"
+          curl -fsSLO "$url/actionlint_1.7.12_checksums.txt"
+          awk -v name="$file" '$2 == name { print }' actionlint_1.7.12_checksums.txt | sha256sum -c -
+          tar -xzf "$file" actionlint
+          cd "$GITHUB_WORKSPACE"
+          "$RUNNER_TEMP/actionlint"
       - name: Type check, lint and run build-script tests
         run: |
           npm install --global --no-audit --no-fund pnpm@11.11.0

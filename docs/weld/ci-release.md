@@ -9,7 +9,7 @@
 | Weld release draft | main 上手动选择候选 run ID 和版本 | 同一成功候选 run 的五个包经独立签名/检验任务验证，确认 SHA-256 和来源后生成草稿。 |
 | Weld upstream and security watch | 定时或手动 | 官方 Brave 固定版本和 Chromium 稳定渠道版本的差异报告。 |
 
-公共 PR 使用 GitHub 托管 runner。昂贵的 Chromium 编译使用仅注册给本仓库的隔离 runner。候选构建完成后重新下载产物才进入签名。签名、通知和发布权限由环境约束。
+公共 PR 使用 GitHub 托管 runner，外部贡献者的运行需经维护者审批。大型 Chromium 编译需要独立环境。公开仓库的自托管标签只能接入一次性、无密钥的构建机，或只允许指定可信工作流的 runner 组。签名使用独立的受保护 runner 组或私有签名环境。候选构建完成后重新下载产物才进入签名。
 
 ## Runner 准备
 
@@ -24,7 +24,7 @@
 | `weld-android-arm64-emulator` | Android arm64 ARM64 API 36 安装运行，英文界面和一次性测试环境。 |
 | `weld-release-linux`、`weld-release-windows`、`weld-release-macos`、`weld-release-ios`、`weld-release-android` | 校验、签名、封装，具备本平台验证工具。 |
 
-开发环境变量使用 `weld-build`，包含 `WELD_IOS_SIMULATOR_UDID` 和 `WELD_ANDROID_SERIAL`。使用独立的 job 专用模拟器，确保没有个人资料与登录状态。各签名环境使用 `weld-signing-linux`、`weld-signing-win`、`weld-signing-mac`、`weld-signing-ios`、`weld-signing-android`。 `weld-release` 控制草稿生成。环境仅允许 `main`，设置审批人并配置团队审批制度。Signing runner 的签名钥匙只能由签名环境可用，且要限制到单独 OS 账户。安装 runner 或购买容量前先审批成本与使用范围。
+开发环境变量使用 `weld-build`，包含 `WELD_IOS_SIMULATOR_UDID` 和 `WELD_ANDROID_SERIAL`。使用独立的 job 专用模拟器，确保没有个人资料与登录状态。各签名环境使用 `weld-signing-linux`、`weld-signing-win`、`weld-signing-mac`、`weld-signing-ios`、`weld-signing-android`。 `weld-release` 控制草稿生成。环境仅允许 `main`。签名和草稿均经过审批；有第二位维护者后启用独立审批，并配置 runner 组限制工作流访问。安装 runner 或购买容量前先确认成本与使用范围。
 
 ## 签名与包契约
 
@@ -53,3 +53,5 @@ Apple 密钥不可同时出现在 build runner 和签名 runner。macOS 归档�
 至少有一次同一提交对应的 GitHub Actions 五平台签名包可下载、哈希匹配、可以安装或正常启动。Linux 需使用实际 sandbox，Windows 要完成真实 GUI，Android 需在模拟器安装并通过 Shields，iOS 需核查真机包无 VPN 并验证可分发签名，macOS 需核查签名与公证。完成云端重跑或按记录验证可复现后，才清理本地 Weld 构建缓存、任务专用容器/虚拟机和中间编译目录。已验收的发布包、源码、签名材料和用户数据按各自归档方式保留。
 
 [GitHub 托管 runner 规格](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)
+
+[GitHub 自托管 runner 组的访问限制](https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/manage-access)

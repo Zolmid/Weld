@@ -8,6 +8,7 @@ import Brave
 import BraveCore
 import BraveNews
 import BraveShared
+import BraveShields
 import BraveWidgetsModels
 import BrowserIntentsModels
 import Combine
