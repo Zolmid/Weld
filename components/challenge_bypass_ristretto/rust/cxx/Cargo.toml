@@ -11,5 +11,5 @@ cxx = { version = "1.0" }
 derive_more = "0.99"
 hmac = "0.10"
 lazy_static = "1.4.0"
-rand = "0.7"
+rand = "0.10"
 sha2 = "0.9"
