@@ -57,4 +57,6 @@ jobs:
           git init -q vendor/depot_tools
           git -C vendor/depot_tools fetch --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git 006c1455f9ac26d03cafdf337003fdc3144dbff3
           git -C vendor/depot_tools checkout --detach FETCH_HEAD
+          vendor/depot_tools/ensure_bootstrap
+          vendor/depot_tools/python-bin/python3 --version
           pnpm run test:scripts --runInBand
