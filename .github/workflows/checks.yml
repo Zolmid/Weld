@@ -15,9 +15,13 @@ jobs:
     name: Source checks
     runs-on: ubuntu-24.04
     timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: src/brave
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
+          path: src/brave
           fetch-depth: 0
           filter: blob:none
           persist-credentials: false
@@ -44,7 +48,7 @@ jobs:
           curl -fsSLO "$url/actionlint_1.7.12_checksums.txt"
           awk -v name="$file" '$2 == name { print }' actionlint_1.7.12_checksums.txt | sha256sum -c -
           tar -xzf "$file" actionlint
-          cd "$GITHUB_WORKSPACE"
+          cd "$GITHUB_WORKSPACE/src/brave"
           "$RUNNER_TEMP/actionlint"
       - name: Type check, lint and run build-script tests
         run: |
@@ -53,4 +57,6 @@ jobs:
           git init -q vendor/depot_tools
           git -C vendor/depot_tools fetch --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git 006c1455f9ac26d03cafdf337003fdc3144dbff3
           git -C vendor/depot_tools checkout --detach FETCH_HEAD
+          GSUTIL_ENABLE_LUCI_AUTH=0 "$PWD/vendor/depot_tools/ensure_bootstrap"
+          vendor/depot_tools/python-bin/python3 --version
           pnpm run test:scripts --runInBand
